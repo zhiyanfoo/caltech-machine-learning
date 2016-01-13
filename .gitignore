@@ -1,0 +1,9 @@
+.DS_Store
+.Python
+.gitignore.swp
+Learning From Data - A short course - Abu-Mostafa, Magdon-Ismail, Lin - AMLBook.com - 2012.pdf
+bin/
+lib/
+pip-selfcheck.json
+pyvenv.cfg
+share/
