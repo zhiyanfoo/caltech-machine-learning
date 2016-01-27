@@ -76,19 +76,19 @@ def sign(x,w):
 def linear_percepton(data):
     x = data['raw']
     y = data['classified']
-    print("x")
-    print(x)
-    print("y")
-    print(y)
+    # print("x")
+    # print(x)
+    # print("y")
+    # print(y)
     xt_x = x.transpose().dot(x)
-    print('xt_x')
-    print(xt_x)
+    # print('xt_x')
+    # print(xt_x)
     xt_y = x.transpose().dot(y)
-    print('xt_y')
-    print(xt_y)
+    # print('xt_y')
+    # print(xt_y)
     inv_xt_x = np.linalg.inv(xt_x)
-    print('inv_xt_x')
-    print(inv_xt_x)
+    # print('inv_xt_x')
+    # print(inv_xt_x)
     return inv_xt_x.dot(xt_y)
 
 def check_classification(data, lin_target_function, weight=None):
@@ -106,12 +106,12 @@ def check_classification(data, lin_target_function, weight=None):
     plt.plot([-1,1],[lin_target_function(-1),lin_target_function(1)], '-')
     # xy_plus = [ [data['raw'][i,1], data['raw'][i,2]] for i in range(len(data['raw'])) if data['classified'][i] == 1]
     xy_plus = [ [data['raw'][i,1], data['raw'][i,2]] for i in range(len(data['raw'])) if color(i) == 1]
-    print('xy_plus')
-    print(xy_plus)
+    # print('xy_plus')
+    # print(xy_plus)
     # xy_minus = [ [data['raw'][i,1], data['raw'][i,2]] for i in range(len(data['raw'])) if data['classified'][i]  == -1]
     xy_minus = [ [data['raw'][i,1], data['raw'][i,2]] for i in range(len(data['raw'])) if color(i)  == -1]
-    print('xy_minus')
-    print(xy_minus)
+    # print('xy_minus')
+    # print(xy_minus)
     p1 = zip(*xy_plus)
     p2 = zip(*xy_minus)
 
@@ -126,42 +126,42 @@ def check_classification(data, lin_target_function, weight=None):
 def trial(in_sample, out_sample):
     raw_data = n_random_datapoint(out_sample)
     training_indices = np.random.choice(out_sample, size=in_sample, replace=False)
-    print('training_indices')
-    print(training_indices)
-    training_data = raw_data[training_indices,:]
-    print('training_data')
-    print(training_data)
+    # print('training_indices')
+    # print(training_indices)
+    # training_data = raw_data[training_indices,:]
+    # print('training_data')
+    # print(training_data)
     data, target_function = classify_data_linear_binary_random(raw_data)
-    linear_weight = linear_percepton(data)
-    return check_error(training_data), return check_error(raw_data)
+    # print('data')
+    # print(data)
 
+    # return check_error(training_data, linear_weight), check_error(raw_data, linear_weight)
+    training_raw = data['raw'][training_indices, :]
+    # print("data['classified']")
+    # print(data['classified'])
+    training_classified = data['classified'][training_indices]
+    training_data = { 'raw' : training_raw, 'classified' : training_classified } 
+    linear_weight = linear_percepton(training_data)
+    return check_error(training_data, linear_weight), check_error(data, linear_weight) 
 
 
 def check_error(data, linear_weight):
     linear_classification = [ sign(x, linear_weight) for x in data['raw'] ]
     n_misclassified_points = len(data['classified']) - sum(linear_classification == data['classified'])
-    check_classification(data, target_function, linear_weight)
-    print(n_misclassified_points)
+    # print('n_misclassified_points')
+    # print(n_misclassified_points)
     return n_misclassified_points / len(data['raw'])
+
+def average_trial_results(num_trials, in_sample, out_sample):
+    trials = np.array([ trial(100, 1000) for _ in range(num_trials) ])
+    # print(trials)
+    return np.mean(trials, axis=0)
 
 
 def main():
-    # raw_data = n_random_datapoint(140)
-    # print('raw_data')
-    # print(raw_data)
-    # m, c = rand_line()
-    # print(m ,c)
-    # target_function = create_lin_target_function(m, c)
-    # data = classify_data(raw_data, target_function)
-    # print('data')
-    # print(data)
-    # print('binary_percepton')
-    # print(binary_percepton(data))
-    # print('linear_percepton')
-    # lin_per = linear_percepton(data)
-    # print(lin_per)
-    # check_classification(data, target_function, lin_per)
-    trial(100, 1000)
+    # trial_results = trial(100, 1000)
+    # print(trial_results)
+    print(average_trial_results(1000, 100, 1000))
 
 
 if __name__ == "__main__":
