@@ -22,30 +22,44 @@ def rand_line():
     c = y1 - x1 * m
     return m, c
 
-def create_lin_target_function(m,c):
-    def lin_target_function(x):
+def create_linear_function(m,c):
+    def linear_function(x):
         return x*m + c
-    return lin_target_function
+    return linear_function
+
+def create_linear_target_function(linear_function):
+    def linear_target_function(data_point):
+        if data_point[2] - linear_function(data_point[1]) < 0:
+            return -1
+        else:
+            return 1
+    return linear_target_function
+
+def non_linear_target_function(data_point):
+    return sign(data_point[1]**2 + data_point[2]**2 - 0.6)
 
 
 def classify_data(raw_data, target_function):
-    classified = np.array([ classify_point(data_point, target_function) for data_point in raw_data ])
+    classified = np.array([ target_function(data_point) for data_point in raw_data ])
     return {'raw' : raw_data, 'classified' : classified}
 
 def classify_data_linear_binary_random(raw_data):
     m, c = rand_line()
-    target_function = create_lin_target_function(m, c)
-    data = classify_data(raw_data, target_function)
-    return data, target_function
-
-def classify_point(data_point, target_function):
-    if data_point[2] - target_function(data_point[1]) < 0:
-        return -1
-    else:
-        return 1
+    linear_function = create_linear_function(m, c)
+    linear_target_function = create_linear_target_function(linear_function)
+    data = classify_data(raw_data, linear_target_function)
+    return data, linear_target_function
 
 def binary_percepton(data):
-    weight_vectors = np.zeros(len(data['raw'][0]))
+    # weight_vectors = np.zeros(len(data['raw'][0]))
+    weight_vectors = linear_percepton(data)
+    weight, iterations = update(weight_vectors, data, 0)
+    return weight, iterations
+
+def binary_percepton(data, weight_vectors=None):
+    # weight_vectors = np.zeros(len(data['raw'][0]))
+    if weight_vectors != None:
+        weight_vectors = linear_percepton(data)
     weight, iterations = update(weight_vectors, data, 0)
     return weight, iterations
 
@@ -54,21 +68,19 @@ def update(weight, data, iterations):
     if mis_index is None:
         return weight, iterations
     new_weight = weight + data['raw'][mis_index] * data['classified'][mis_index]
-    # print(new_weight)
     return update(new_weight, data, iterations + 1)
 
 def a_misclassified_point(data, weight):
     start = np.random.randint(0, len(data['raw']) - 1)
     for i in chain(range(0, start), range(start, len(data['raw']))):
-        if sign(data['raw'][i], weight) != data['classified'][i]:
+        if sign(np.dot(data['raw'][i], weight)) != data['classified'][i]:
             return i
     return None
 
-def sign(x,w):
-    x_dot_w = np.dot(x,w)
-    if x_dot_w < 0:
+def sign(x):
+    if x < 0:
         return -1
-    elif x_dot_w > 0:
+    elif x > 0:
         return 1
     else:
         return 0
@@ -76,35 +88,52 @@ def sign(x,w):
 def linear_percepton(data):
     x = data['raw']
     y = data['classified']
-    # print("x")
-    # print(x)
-    # print("y")
-    # print(y)
     xt_x = x.transpose().dot(x)
-    # print('xt_x')
-    # print(xt_x)
     xt_y = x.transpose().dot(y)
-    # print('xt_y')
-    # print(xt_y)
     inv_xt_x = np.linalg.inv(xt_x)
-    # print('inv_xt_x')
-    # print(inv_xt_x)
     return inv_xt_x.dot(xt_y)
 
-def check_classification(data, lin_target_function, weight=None):
+def trial(in_sample, out_sample):
+    raw_data = n_random_datapoint(out_sample)
+    data, target_function = classify_data_linear_binary_random(raw_data)
+    training_indices = np.random.choice(out_sample, size=in_sample, replace=False)
+    training_raw = data['raw'][training_indices, :]
+    training_classified = data['classified'][training_indices]
+    training_data = { 'raw' : training_raw, 'classified' : training_classified } 
+    linear_weight = linear_percepton(training_data)
+    return check_error(training_data, linear_weight), check_error(data, linear_weight) 
+
+def check_error(data, linear_weight):
+    linear_classification = [ sign(np.dot(x, linear_weight)) for x in data['raw'] ]
+    n_misclassified_points = len(data['classified']) - sum(linear_classification == data['classified'])
+    return n_misclassified_points / len(data['raw'])
+
+def average_trial_results(num_trials, in_sample, out_sample):
+    trials = np.array([ trial(100, 1000) for _ in range(num_trials) ])
+    return np.mean(trials, axis=0)
+
+
+def main():
+    # trial_results = trial(100, 1000)
+    # print(trial_results)
+    # print(average_trial_results(1000, 100, 1000))
+    pass
+
+
+
+def check_classification(data, linear_function, weight=None):
     import matplotlib.pyplot as plt
     
     if weight != None:
         def color(i):
-            return sign(data['raw'][i], weight)
+            return sign(np.dot(data['raw'][i], weight))
     else:
         def color(i):
             return data['classified'][i]
 
 
-    plt.plot([-1, 1], [lin_target_function(-1), lin_target_function(1)], '-')
-    plt.plot([-1,1],[lin_target_function(-1),lin_target_function(1)], '-')
-    # xy_plus = [ [data['raw'][i,1], data['raw'][i,2]] for i in range(len(data['raw'])) if data['classified'][i] == 1]
+    plt.plot([-1, 1], [linear_function(-1), linear_function(1)], '-')
+    plt.plot([-1,1],[linear_function(-1),linear_function(1)], '-')
     xy_plus = [ [data['raw'][i,1], data['raw'][i,2]] for i in range(len(data['raw'])) if color(i) == 1]
     # print('xy_plus')
     # print(xy_plus)
@@ -123,46 +152,6 @@ def check_classification(data, lin_target_function, weight=None):
     plt.axis([-1, 1, -1, 1])
     plt.show()
 
-def trial(in_sample, out_sample):
-    raw_data = n_random_datapoint(out_sample)
-    training_indices = np.random.choice(out_sample, size=in_sample, replace=False)
-    # print('training_indices')
-    # print(training_indices)
-    # training_data = raw_data[training_indices,:]
-    # print('training_data')
-    # print(training_data)
-    data, target_function = classify_data_linear_binary_random(raw_data)
-    # print('data')
-    # print(data)
-
-    # return check_error(training_data, linear_weight), check_error(raw_data, linear_weight)
-    training_raw = data['raw'][training_indices, :]
-    # print("data['classified']")
-    # print(data['classified'])
-    training_classified = data['classified'][training_indices]
-    training_data = { 'raw' : training_raw, 'classified' : training_classified } 
-    linear_weight = linear_percepton(training_data)
-    return check_error(training_data, linear_weight), check_error(data, linear_weight) 
-
-
-def check_error(data, linear_weight):
-    linear_classification = [ sign(x, linear_weight) for x in data['raw'] ]
-    n_misclassified_points = len(data['classified']) - sum(linear_classification == data['classified'])
-    # print('n_misclassified_points')
-    # print(n_misclassified_points)
-    return n_misclassified_points / len(data['raw'])
-
-def average_trial_results(num_trials, in_sample, out_sample):
-    trials = np.array([ trial(100, 1000) for _ in range(num_trials) ])
-    # print(trials)
-    return np.mean(trials, axis=0)
-
-
-def main():
-    # trial_results = trial(100, 1000)
-    # print(trial_results)
-    print(average_trial_results(1000, 100, 1000))
-
-
 if __name__ == "__main__":
     main()
+
