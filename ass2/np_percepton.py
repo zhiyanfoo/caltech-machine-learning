@@ -56,13 +56,6 @@ def binary_percepton(data):
     weight, iterations = update(weight_vectors, data, 0)
     return weight, iterations
 
-def binary_percepton(data, weight_vectors=None):
-    # weight_vectors = np.zeros(len(data['raw'][0]))
-    if weight_vectors != None:
-        weight_vectors = linear_percepton(data)
-    weight, iterations = update(weight_vectors, data, 0)
-    return weight, iterations
-
 def update(weight, data, iterations):
     mis_index = a_misclassified_point(data, weight)
     if mis_index is None:
