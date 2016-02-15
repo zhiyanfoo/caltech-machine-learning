@@ -11,6 +11,10 @@ def question_one_two_three():
 def growth_function_two_interval(n):
     return 2 * (first_black(n) + comb(n-1,2) + n)
 
+def new_growth_function_two_interval(n):
+    return first_black_new(n) + comb(n+1,2) + 1
+
+
 def first_black(n):
     total = 0
     for i in range(n-3):
@@ -29,6 +33,25 @@ def second_black(n):
     #     total += 1
     return n - 1
 
+def first_black_new(n):
+    total = 0
+    d = n + 1
+    for i in range(d-3):
+        total += second_black_new(d-i-1)
+    return total
+
+def second_black_new(d):
+    total = 0
+    for i in range(d-2):
+        total += third_black_new(d-i-1)
+    return total
+
+def third_black_new(d):
+    total = 0
+    for i in range(d-1):
+        total += d-i-1
+    return total
+
 def growth_function_two_interval_analytical(n):
     return 2 * (sum([ comb(n-i-1, 2) for i in range(1, n-3+1) ]) + comb(n-1,2) + n)
 
@@ -45,12 +68,15 @@ def growth_function_option_d(n):
     return comb(n+1, 4) + comb(n+1, 3) + comb(n+1, 2) + comb(n+1, 1) + 1
 
 def question_seven():
-    return [ (growth_function_two_interval(n),
-        growth_function_two_interval_analytical(n),
-        growth_function_option_a(n),
-        growth_function_option_b(n),
+    return [ 
+            (
+            # growth_function_two_interval(n),
+        # growth_function_two_interval_analytical(n),
+        # growth_function_option_a(n),
+        # growth_function_option_b(n),
         growth_function_option_c(n),
-        growth_function_option_d(n),
+        # growth_function_option_d(n),
+        new_growth_function_two_interval(n),
         ) for n in range(4, 14) ] 
 
 
@@ -62,16 +88,13 @@ def main():
 ans1 = 'b'
 ans2 = 'c'
 ans3 = 'd'
-ans4 = 'a'
-ans5 = 'e'
-ans5 = 'c'
+ans4 = 'aXb' 
+ans5 = 'eXb' # growth functions have to be polynominal or 2^N
 ans6 = 'c'
 ans7 = 'e'
 ans8 = 'd'
-ans9 = 'a'
-ans10 = 'd'
+ans9 = 'aXd'
+ans10 = 'b'
 
 if __name__ == '__main__':
     main()
-
-
