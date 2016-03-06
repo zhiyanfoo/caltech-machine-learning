@@ -8,12 +8,14 @@ import numpy as np
 from sympy import exp, log, sqrt, power
 from sympy import Eq
 from sympy import Symbol
-from sympy import nsolve
+from sympy import solve, nsolve
 from sympy import plot_implicit
 from sympy.plotting import plot
 from decimal import Decimal
 
 from scipy.integrate import quad
+
+np.random.seed(0)
 
 def vc_inequality_right_side(growth_function, error, datapoints):
     return 4 * growth_function(2*datapoints) * exp(-1 / 8 * error**2 * datapoints) 
@@ -86,7 +88,6 @@ def visualize():
     plt.plot(x, m*x, 'r', label='Fitted line')
     plt.legend()
     plt.show()
-    plt.show()
     # x = np.linspace(-15,15,100) # 100 linearly spaced numbers # y = np.sin(x)/x # computing the values of sin(x)/x
     # # compose plot
     # plt.plot(x,y) # sin(x)/x
@@ -108,18 +109,132 @@ def question_five():
     m = np.mean([ np_percepton.linear_percepton(one_point_data(2)) for i in range(100000) ])
     def integrand(x):
         return (m * x - target_function(x)) ** 2
-    return quad(integrand, -1, 1) 
+    bounds = (-1, 1)
+    return quad(integrand,*bounds)[0] / (bounds[1] - bounds[0])
 
 
 def question_six():
-    trials = [ one_point_data(2) for _ in range(10000) ]
+    trials = [ one_point_data(2) for _ in range(10) ]
     gradients = [ np_percepton.linear_percepton(data) for data in trials ]
     mean_gradient = np.mean(gradients)
-    return np.mean([ quad(lambda x : ( (np_percepton.linear_percepton(data) - mean_gradient) * x ) ** 2, -1, 1)
-        for data in trials ])
+    bounds = (-1, 1)
+    error = [ quad(lambda x : ( (np_percepton.linear_percepton(data) - mean_gradient) * x ) ** 2, *bounds)[0] / (bounds[1] - bounds[0])
+        for data in trials ]
+    return np.mean(error)
     
-def out_of_sample_error(hypthesis):
+# def question_seven():
+#     hypothesess_parameters_generators = ( generate_constant_parameters, generate_line_parameters, generate_linear_parameters, generate_ax_sqr_parameters, generate_quadratic_parameters)
+#     hypothesess = ( constant, line, linear, ax_sqr, quadratic)
+    trials = [ one_point_data(2) for _ in range(10) ]
+#     hypothesess_parameters = [ generate_hypothesis_parameters(trials) for generate_hypothesis_parameters in hypothesess_parameters_generators ]
+#     print(hypothesess_parameters)
+#     hypothesess_error_functions = [ generate_error_sq(hypothesis, target_function) 
+#             for hypothesis in hypothesess]
+#     hypotheses_out_of_sample_error = [ 
+#             quad(hypothesess_error_functions[i], -1, 1, hypothesess_parameters[i]) 
+#             for i in range(len(hypothesess_error_functions)) ]
+#     print('hypotheses_out_of_sample_error values')
+#     print([ sample_error[0] for sample_error in hypotheses_out_of_sample_error ])
+#     return min(hypotheses_out_of_sample_error)
+
+def questions7_least_error():
+    """
+    Out of the following hypothesis sets
+    h(x) = b
+    h(x) = ax
+    h(x) = ax + b
+    h(x) = ax**2
+    h(x) = ax**2 + b
+    which has the least out of sample error, when 
+    the target function is sin(pi * x).
+    The hypothesis error is made out of two components,
+    the bias and variance.
+    The bias is equal to the following
+    bias = E_x[(g_mean(x) - f(x)) ** 2]
+    variance = E_x[E_d[(g^(d)(x) - g_mean(x))**2]]
+    error = bias plus variance.
+    """
+    trials = [ one_point_data(2) for _ in range(10) ]
+    print('trials')
+    print(trials)
+    constant_parameters = get_constant_parameters(trials)
+    print('constant_parameters')
+    print(constant_parameters)
+    mean_constant_parameters = [np.mean(constant_parameters)]
+    print('mean_constant_parameters')
+    print(mean_constant_parameters)
+    bounds = (-1,1)
+    print('expected_bias')
+    print(expected_bias(constant, target_function, bounds, mean_constant_parameters))
+
+# def variance_of_average_hypothesis(mean_parameters, hypothesis, trials_parameters):
+#     bounds = (-1, 1)
+#     error = [ quad(lambda x, a, b : (hypothesis(x, *a) - hypothesis(x, *b)) **2 , *bounds, (mean_parameters, parameters))[0] / (bounds[1] - bounds[0])
+#         for parameters in trials_parameters ]
+#     print(error)
+#     return np.mean(error)
+
+def expected_value_of_out_of_sample_error(hypothesis, target_function, bounds, mean_parameters):
     pass
+    
+def expected_bias(hypothesis, target_function, bounds, mean_parameters):
+    sq_error = generate_sq_error(hypothesis, target_function)
+    return quad(sq_error, *bounds, [mean_parameters, ])
+
+# def expected_variance():
+#     pass
+
+def generate_sq_error(func1, func2):
+    def sq_error(x, func1_parameters=[], func2_parameters=[]):
+        return (func1(x, *func1_parameters) - func2(x, *func2_parameters)) ** 2
+    return sq_error
+
+def constant(x, c):
+    return c
+
+def line(x, gradient, constant=0):
+    return gradient * x + constant
+
+def quadratic(x, a, b=0):
+    return a * x ** 2 + b
+
+def get_constant_parameters(trials):
+    return [ np.mean(data['classified']) for data in trials ]
+
+def generate_line_parameters(trials):
+    """line through origin"""
+    gradients = [ np_percepton.linear_percepton(data) for data in trials ]
+    mean_gradient = np.mean(gradients)
+    return mean_gradient
+
+def generate_linear_parameters(trials):
+    new_trials = [ { 'classified' : data['classified'], 
+        'raw' : np.insert(data['raw'], 1, 1, axis=1) }
+        for data in trials ]
+    # print(new_trials[0]['raw'])
+    weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
+    average_weights = np.mean(weights, axis=0)
+    return average_weights[0,0], average_weights[1,0]
+
+def generate_ax_sqr_parameters(trials):
+    """ax**2"""
+    new_trials = [ { 'classified' : data['classified'], 
+        'raw' : data['raw'] ** 2 }
+        for data in trials ]
+    weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
+    # print('weights')
+    # print(weights)
+    return np.mean(weights)
+
+def generate_quadratic_parameters(trials):
+    """ax**2 + b"""
+    new_trials = [ { 'classified' : data['classified'], 
+        'raw' : np.insert(data['raw'] ** 2, 1, 1, axis=1) }
+        for data in trials ]
+    weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
+    # print('weights')
+    # print(weights)
+    return np.mean(weights)
 
 def proof_that_linear_percepton_works():
     trials = [one_point_data(2) for i in range(10)]
@@ -129,13 +244,25 @@ def proof_that_linear_percepton_works():
     print(home_processed_trials)
     # print(np.linalg.lstsq(trials['raw'], trials['classified']))
 
+def calculus_weights(data):
+    x = data['raw']
+    y = data['classified']
+    sum_of_xi_yi = sum([ x[i] * y[i] for i in range(len(x)) ])
+    sum_of_xi_sqr = sum([ xi ** 2 for xi in x ])
+    return sum_of_xi_yi / sum_of_xi_sqr 
+
+def np_weights(data):
+    x = data['raw']
+    y = data['classified']
+    return np.linalg.lstsq(x,y)
+
 ans1 = 'd' # 452956.864723099
 ans2 = 'c' # computer couldn't handle devroye plotting
 ans3 = 'c'
 ans4 = 'e'
 ans5 = 'c'
 ans6 = 'a'
-ans7 = ''
+ans7 = 'c'
 ans8 = ''
 ans9 = ''
 ans10 = ''
@@ -146,9 +273,53 @@ def main():
     # print(question_three())
     # print(question_four())
     # print(question_five())
-    print(question_six())
+    # print(question_six())
+    # print(question_seven())
+    print(questions7_least_error())
     pass
 
 if __name__ == '__main__':
     main()
 
+
+    # print('weights')
+    # print(weights)
+    # import matplotlib.pyplot as plt
+
+    # v = np.linspace(-1,1,100)
+    # x = trials[4]['raw']
+    # print('x')
+    # print(x)
+    # y = trials[4]['classified']
+    # print('y')
+    # print(y)
+    # plt.plot(x, y, 'o', label='Original data', markersize=10)
+    # plt.plot(v, weights[4][0][0]*v + weights[4][1][0], 'r', label='lstsqu')
+    # plt.legend()
+    # plt.show()
+
+    # import matplotlib.pyplot as plt
+
+    # v = np.linspace(-1,1,100)
+    # x = trials[4]['raw']
+    # y = trials[4]['classified']
+    # plt.plot(x, y, 'o', label='Original data', markersize=10)
+    # plt.plot(v, gradients[4][0][0]*v, 'r', label='lstsqu')
+    # plt.plot(v, alt_gradients[4]*v, 'r', label='calc', color='g')
+    # plt.legend()
+    # plt.show()
+
+    # print('gradients')
+    # print(gradients)
+    # print('alt_gradients')
+    # print(alt_gradients)
+    # print('np_weights')
+    # print(np_gradients)
+
+    # import matplotlib.pyplot as plt
+    # x = np.linspace(-1,1,100)
+    # plt.plot(x, target_function(x), 'o', label='Original data', markersize=1)
+    # plt.plot(x, hypothesess_parameters[1]*x, 'r', label='line')
+    # plt.plot(x, hypothesess_parameters[2][0]*x, 'r', label='linear', color='g')
+    # # plt.legend()
+    # plt.show()
