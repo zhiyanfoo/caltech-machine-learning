@@ -166,6 +166,10 @@ def questions7_least_error():
     bounds = (-1,1)
     print('expected_bias')
     print(expected_bias(constant, target_function, bounds, mean_constant_parameters))
+    print('expected_variance')
+    print(expected_variance(constant, target_function, bounds, constant_parameters, mean_constant_parameters))
+
+
 
 # def variance_of_average_hypothesis(mean_parameters, hypothesis, trials_parameters):
 #     bounds = (-1, 1)
@@ -179,11 +183,29 @@ def expected_value_of_out_of_sample_error(hypothesis, target_function, bounds, m
     
 def expected_bias(hypothesis, target_function, bounds, mean_parameters):
     sq_error = generate_sq_error(hypothesis, target_function)
-    return quad(sq_error, *bounds, [mean_parameters, ])
+    return quad(sq_error, *bounds, (mean_parameters))[0] # quad returns a tuple of results and possible erro
 
-# def expected_variance():
-#     pass
+def expected_variance(hypothesis, target_function, bounds, parameters_list, mean_parameters):
+    """ 
+    variance = E_x[E_d[(g^(d)(x) - g_mean(x))**2]]
+    variance = E_d[E_x[(g^(d)(x) - g_mean(x))**2]]
+    """ 
+    print([ parameters for parameters in parameters_list ])
+    print(mean_parameters)
+    individual_variances = [ expected_value_integral(
+            generate_sq_error(hypothesis, hypothesis),
+            bounds, 
+            (parameters, mean_parameters)
+        )
+            for parameters in parameters_list ]
+    print('individual_variances')
+    print(individual_variances)
+    return np.mean(individual_variances)
 
+
+def expected_value_integral(func, bounds, parameters):
+    return quad(func, *bounds, parameters)[0] / (bounds[1] - bounds[0])
+    
 def generate_sq_error(func1, func2):
     def sq_error(x, func1_parameters=[], func2_parameters=[]):
         return (func1(x, *func1_parameters) - func2(x, *func2_parameters)) ** 2
@@ -199,7 +221,8 @@ def quadratic(x, a, b=0):
     return a * x ** 2 + b
 
 def get_constant_parameters(trials):
-    return [ np.mean(data['classified']) for data in trials ]
+    """ put each paramter in a list for uniformity with other parameter functions """
+    return [ [np.mean(data['classified'])] for data in trials ]
 
 def generate_line_parameters(trials):
     """line through origin"""
