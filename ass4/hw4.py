@@ -125,7 +125,7 @@ def question_six():
 # def question_seven():
 #     hypothesess_parameters_generators = ( generate_constant_parameters, generate_line_parameters, generate_linear_parameters, generate_ax_sqr_parameters, generate_quadratic_parameters)
 #     hypothesess = ( constant, line, linear, ax_sqr, quadratic)
-    trials = [ one_point_data(2) for _ in range(10) ]
+    # trials = [ one_point_data(2) for _ in range(10) ]
 #     hypothesess_parameters = [ generate_hypothesis_parameters(trials) for generate_hypothesis_parameters in hypothesess_parameters_generators ]
 #     print(hypothesess_parameters)
 #     hypothesess_error_functions = [ generate_error_sq(hypothesis, target_function) 
@@ -157,49 +157,51 @@ def questions7_least_error():
     trials = [ one_point_data(2) for _ in range(10) ]
     print('trials')
     print(trials)
-    constant_parameters = get_constant_parameters(trials)
-    print('constant_parameters')
-    print(constant_parameters)
-    mean_constant_parameters = [np.mean(constant_parameters)]
-    print('mean_constant_parameters')
-    print(mean_constant_parameters)
+    # get_expected_out_of_sample_error(constant, get_constant_parameters, trials)
+    hypothesis_functions = (
+            (constant, get_constant_parameters),
+            (line, get_line_to_parameters),
+            (line, get_line_parameters)
+            )
+    out_of_sample_errors = [ get_expected_out_of_sample_error(hypothesis, get_parameters, trials) for hypothesis, get_parameters in hypothesis_functions ]
+    print(out_of_sample_errors)
+    print(np.argmin(out_of_sample_errors), min(out_of_sample_errors))
+    # return get_expected_out_of_sample_error(line, get_line_parameters, trials)
+
+def get_expected_out_of_sample_error(hypothesis, get_parameters, trials):
+    parameters = get_parameters(trials)
+    print('parameters')
+    print(parameters)
+    mean_parameters = np.mean(parameters, axis=0)
+    print('mean_parameters')
+    print(mean_parameters)
     bounds = (-1,1)
+    bias = expected_bias(hypothesis, target_function, bounds, mean_parameters)
     print('expected_bias')
-    print(expected_bias(constant, target_function, bounds, mean_constant_parameters))
+    print(bias)
+    variance = expected_variance(hypothesis, target_function, bounds, parameters, mean_parameters)
     print('expected_variance')
-    print(expected_variance(constant, target_function, bounds, constant_parameters, mean_constant_parameters))
+    print(variance)
+    return bias + variance
 
-
-
-# def variance_of_average_hypothesis(mean_parameters, hypothesis, trials_parameters):
-#     bounds = (-1, 1)
-#     error = [ quad(lambda x, a, b : (hypothesis(x, *a) - hypothesis(x, *b)) **2 , *bounds, (mean_parameters, parameters))[0] / (bounds[1] - bounds[0])
-#         for parameters in trials_parameters ]
-#     print(error)
-#     return np.mean(error)
-
-def expected_value_of_out_of_sample_error(hypothesis, target_function, bounds, mean_parameters):
-    pass
-    
 def expected_bias(hypothesis, target_function, bounds, mean_parameters):
     sq_error = generate_sq_error(hypothesis, target_function)
-    return quad(sq_error, *bounds, (mean_parameters))[0] # quad returns a tuple of results and possible erro
+    return expected_value_integral(sq_error, bounds, (mean_parameters, ))
 
 def expected_variance(hypothesis, target_function, bounds, parameters_list, mean_parameters):
     """ 
     variance = E_x[E_d[(g^(d)(x) - g_mean(x))**2]]
     variance = E_d[E_x[(g^(d)(x) - g_mean(x))**2]]
     """ 
-    print([ parameters for parameters in parameters_list ])
-    print(mean_parameters)
+    # print('parameters_list')
+    # print(parameters_list)
     individual_variances = [ expected_value_integral(
             generate_sq_error(hypothesis, hypothesis),
-            bounds, 
-            (parameters, mean_parameters)
+            bounds, (parameters, mean_parameters)
         )
             for parameters in parameters_list ]
-    print('individual_variances')
-    print(individual_variances)
+    # print('individual_variances')
+    # print(individual_variances)
     return np.mean(individual_variances)
 
 
@@ -208,6 +210,10 @@ def expected_value_integral(func, bounds, parameters):
     
 def generate_sq_error(func1, func2):
     def sq_error(x, func1_parameters=[], func2_parameters=[]):
+        # print('func1_parameters')
+        # print(func1_parameters)
+        # print('func2_parameters')
+        # print(func2_parameters)
         return (func1(x, *func1_parameters) - func2(x, *func2_parameters)) ** 2
     return sq_error
 
@@ -224,20 +230,24 @@ def get_constant_parameters(trials):
     """ put each paramter in a list for uniformity with other parameter functions """
     return [ [np.mean(data['classified'])] for data in trials ]
 
-def generate_line_parameters(trials):
-    """line through origin"""
+def get_line_to_parameters(trials):
+    """line_to : line through origin"""
     gradients = [ np_percepton.linear_percepton(data) for data in trials ]
-    mean_gradient = np.mean(gradients)
-    return mean_gradient
+    print('gradients')
+    print(gradients)
+    return gradients
 
-def generate_linear_parameters(trials):
+def get_line_parameters(trials):
     new_trials = [ { 'classified' : data['classified'], 
         'raw' : np.insert(data['raw'], 1, 1, axis=1) }
         for data in trials ]
     # print(new_trials[0]['raw'])
     weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
-    average_weights = np.mean(weights, axis=0)
-    return average_weights[0,0], average_weights[1,0]
+    print('weights')
+    print(np.array(weights))
+    return np.array(weights)
+    # average_weights = np.mean(weights, axis=0)
+    # return average_weights[0,0], average_weights[1,0]
 
 def generate_ax_sqr_parameters(trials):
     """ax**2"""
@@ -283,7 +293,7 @@ ans1 = 'd' # 452956.864723099
 ans2 = 'c' # computer couldn't handle devroye plotting
 ans3 = 'c'
 ans4 = 'e'
-ans5 = 'c'
+ans5 = 'b'
 ans6 = 'a'
 ans7 = 'c'
 ans8 = ''
