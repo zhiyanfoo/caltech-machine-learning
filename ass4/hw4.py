@@ -154,18 +154,21 @@ def questions7_least_error():
     variance = E_x[E_d[(g^(d)(x) - g_mean(x))**2]]
     error = bias plus variance.
     """
-    trials = [ one_point_data(2) for _ in range(10) ]
+    trials = [ one_point_data(2) for _ in range(1000) ]
     print('trials')
     print(trials)
-    # get_expected_out_of_sample_error(constant, get_constant_parameters, trials)
     hypothesis_functions = (
-            (constant, get_constant_parameters),
+            # (constant, get_constant_parameters),
             (line, get_line_to_parameters),
-            (line, get_line_parameters)
+            # (line, get_line_parameters), 
+            # (quadratic, generate_quadratic_to_parameters), 
+            # (quadratic, generate_quadratic_parameters),
             )
     out_of_sample_errors = [ get_expected_out_of_sample_error(hypothesis, get_parameters, trials) for hypothesis, get_parameters in hypothesis_functions ]
+    print('out_of_sample_errors')
     print(out_of_sample_errors)
-    print(np.argmin(out_of_sample_errors), min(out_of_sample_errors))
+    print('argmin', ',', 'min')
+    print(np.argmin(out_of_sample_errors), ',', min(out_of_sample_errors))
     # return get_expected_out_of_sample_error(line, get_line_parameters, trials)
 
 def get_expected_out_of_sample_error(hypothesis, get_parameters, trials):
@@ -217,6 +220,10 @@ def generate_sq_error(func1, func2):
         return (func1(x, *func1_parameters) - func2(x, *func2_parameters)) ** 2
     return sq_error
 
+def convert_linear_percepton_result_to_parameters(weights):
+    return [ [ unneeded_list[0] for unneeded_list in list_of_unneeded_lists ] 
+                for list_of_unneeded_lists in weights ]
+
 def constant(x, c):
     return c
 
@@ -232,42 +239,51 @@ def get_constant_parameters(trials):
 
 def get_line_to_parameters(trials):
     """line_to : line through origin"""
-    gradients = [ np_percepton.linear_percepton(data) for data in trials ]
+    int_gradients = [ np_percepton.linear_percepton(data) for data in trials ]
+    print(int_gradients)
+    gradients = convert_linear_percepton_result_to_parameters(int_gradients)
     print('gradients')
-    print(gradients)
-    return gradients
+    print(np.array(gradients))
+    return np.array(gradients)
 
 def get_line_parameters(trials):
     new_trials = [ { 'classified' : data['classified'], 
         'raw' : np.insert(data['raw'], 1, 1, axis=1) }
         for data in trials ]
     # print(new_trials[0]['raw'])
-    weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
+    int_weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
+    print('int_weights')
+    print(int_weights)
+    weights = convert_linear_percepton_result_to_parameters(int_weights)
     print('weights')
     print(np.array(weights))
     return np.array(weights)
-    # average_weights = np.mean(weights, axis=0)
-    # return average_weights[0,0], average_weights[1,0]
 
-def generate_ax_sqr_parameters(trials):
-    """ax**2"""
+def generate_quadratic_to_parameters(trials):
+    """line_to : line through origin
+       function of form ax^2
+    """
     new_trials = [ { 'classified' : data['classified'], 
         'raw' : data['raw'] ** 2 }
         for data in trials ]
-    weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
-    # print('weights')
-    # print(weights)
-    return np.mean(weights)
+    int_weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
+    weights = convert_linear_percepton_result_to_parameters(int_weights)
+    print('weights')
+    print(weights)
+    return np.array(weights)
 
 def generate_quadratic_parameters(trials):
-    """ax**2 + b"""
+    """ax^2 + b"""
     new_trials = [ { 'classified' : data['classified'], 
         'raw' : np.insert(data['raw'] ** 2, 1, 1, axis=1) }
         for data in trials ]
-    weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
-    # print('weights')
-    # print(weights)
-    return np.mean(weights)
+    int_weights = [ np_percepton.linear_percepton(data) for data in new_trials ]
+    print('int_weights')
+    print(int_weights)
+    weights = convert_linear_percepton_result_to_parameters(int_weights)
+    print('weights')
+    print(weights)
+    return np.array(weights)
 
 def proof_that_linear_percepton_works():
     trials = [one_point_data(2) for i in range(10)]
@@ -289,6 +305,7 @@ def np_weights(data):
     y = data['classified']
     return np.linalg.lstsq(x,y)
 
+
 ans1 = 'd' # 452956.864723099
 ans2 = 'c' # computer couldn't handle devroye plotting
 ans3 = 'c'
@@ -296,9 +313,9 @@ ans4 = 'e'
 ans5 = 'b'
 ans6 = 'a'
 ans7 = 'c'
-ans8 = ''
-ans9 = ''
-ans10 = ''
+ans8 = 'c'
+ans9 = 'b'
+ans10 = 'dxe'
 
 def main():
     # print(question_one())
@@ -308,7 +325,8 @@ def main():
     # print(question_five())
     # print(question_six())
     # print(question_seven())
-    print(questions7_least_error())
+    # print(questions7_least_error())
+    print(question8_find_breakpoint())
     pass
 
 if __name__ == '__main__':
