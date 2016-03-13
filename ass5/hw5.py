@@ -1,3 +1,8 @@
+import sys
+sys.path.insert(0, '/Users/zhiyan/Courses/caltech_machine_learning/ass2')
+
+import np_percepton
+
 import numpy as np
 
 import mpmath as mp
@@ -6,6 +11,7 @@ from mpmath import mpf
 from mpmath import e
 
 from itertools import cycle
+from functools import partial
 # from sympy import Eq
 # from sympy import Symbol
 # from sympy import solve, nsolve
@@ -113,6 +119,39 @@ def coordinate_descent_max_iterations(
             cycle(range(len(gradient))),
             initial_conditions, 0)
 
+def question8():
+    trial(1,10)
+    pass
+
+def trial(in_sample, out_sample):
+    raw_data = np_percepton.n_random_datapoint(out_sample)
+    data, target_function = np_percepton.classify_data_linear_binary_random(raw_data)
+    training_indices = np.random.choice(out_sample, size=in_sample, replace=False)
+    training_raw = data['raw'][training_indices, :]
+    training_classified = data['classified'][training_indices]
+    training_data = { 'raw' : training_raw, 'classified' : training_classified } 
+    gradient = [ partial(cross_entrophy_error_ith_derivative, i=j)
+        for j in range(len(training_raw[0])) ]
+    weights = stochastic_gradient_descent(
+        training_data, cross_entrophy_error, gradient)
+    
+def cross_entrophy_error(y, x, w):
+    return ln(1+exp(-y * np.dot(x,w)))
+
+def cross_entrophy_error_ith_derivative(i, y, x, w):
+    return - (y * x[i] * w[i]) / (1 + exp(y * np.dot(x,w)))
+
+def stochastic_gradient_descent(training_data, error, gradient):
+    weights = np.zeros(len(training_data['raw']))
+    datat_iter_index = iter(np.shuffle(arrange(len(training_data['raw'])))
+    ep = epoch(training_data, error, gradient,)
+    pass
+
+def epoch(training_data, error, gradient):
+    pass
+
+
+
 ans = {
     1 : 'a',
     2 : 'd',
@@ -127,7 +166,8 @@ def main():
     # print(question1())
     # visualize()
     # print(question5())
-    print(question6())
+    # print(question6())
+    print(question8())
     pass
 
 def tests():
