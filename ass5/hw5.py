@@ -194,7 +194,7 @@ def epoch(training_data, weights, error_function, gradient):
     return weights
 
 ans = {
-    1 : 'a',
+    1 : 'axc',
     2 : 'd',
     3 : 'c',
     4 : 'e',
