@@ -129,6 +129,8 @@ def question5(training_data, testing_data):
 def pow_10(k): 
     return 10**k
 
+# REGULARIZATION FOR POLYNOMIALS
+
 def main():
     question2to6()
 
@@ -142,5 +144,8 @@ ans = {
         4 : 'e',
         5 : 'd',
         6 : 'b',
+        7 : 'c',
+        8 : 'd',
+        9 : 'a',
         }
 
