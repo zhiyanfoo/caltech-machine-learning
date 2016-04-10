@@ -96,8 +96,10 @@ class DataML:
         self.y = data[:,data.shape[1]-1]
         if transform == None:
             self.z = self.x
+            self.z_y = data
         else:
             self.z = transform(self.x)
+            self.z_y = np.concatenate([self.z, np.array([self.y]).T], axis=1)
 
     def __repr__(self):
         z_repr = "input : z\n" + str(self.z)
@@ -147,5 +149,6 @@ ans = {
         7 : 'c',
         8 : 'd',
         9 : 'a',
+        10 : 'e',
         }
 
