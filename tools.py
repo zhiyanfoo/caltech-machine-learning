@@ -27,9 +27,6 @@ def random_set(n, target_function, transform=None):
         return DataML((x, y), transform)
 
 
-def training_testing_set(in_sample, out_sample, target_function):
-    return random_set(in_sample, target_function), random_set(out_sample, target_function)
-
 class DataML:
     def __init__(self, data, transform=None):
         xy_as_tuple = type(data) == tuple or type(data) == list and len(data) == 2
@@ -124,8 +121,8 @@ def classified_error(learnt_output, real_output):
     equality_array = np.equal(learnt_output, real_output)
     return 1 - sum(equality_array) / len(equality_array)
 
-def experiment(in_sample, out_sample, trial, total_trials):
-    results = [ trial(in_sample, out_sample) for _ in range(total_trials) ] 
+def experiment(trial, trial_args, total_trials):
+    results = [ trial(*trial_args) for _ in range(total_trials) ] 
     mean_results = np.mean(results, axis=0)
     return mean_results
 
@@ -139,3 +136,10 @@ def sign(x):
     else:
         return 0
 
+def output(simulations):
+    print("conducting simulations...")
+    sim = simulations()
+    print("simulations done")
+    for key in sorted(sim.keys()):
+        print("""question""", key)
+        print(sim[key][0], sim[key][1])

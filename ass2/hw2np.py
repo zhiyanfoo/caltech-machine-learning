@@ -1,72 +1,69 @@
+import os
+import sys
+
+above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, above_dir)
+
+from tools import *
 import numpy as np
 import np_percepton as perc
 
 np.random.seed(0)
-# Hoeffding Inequality 
-# question 1,2
 
-def experiment(num_trials, sample_size, num_flips):
+# HOEFFDING INEQUALITY 
+
+def coin_data(num_trials, sample_size, num_flips):
     return np.random.randint(2, size=(num_trials, sample_size, num_flips))
 
-def collate_flip_results(experiment):
-    return np.sum(experiment, axis=2)
+def collate_flip_results(coin_data):
+    return np.sum(coin_data, axis=2)
 
-def experiment_results(experiment_collated_flips):
-    avg_v1 = np.average(experiment_collated_flips[:,0])
+def experiment_results(collated_flips):
+    avg_v1 = np.average(collated_flips[:,0])
     random_samples = [ trial[np.random.randint(len(trial))] 
-            for trial in experiment_collated_flips ]
+            for trial in collated_flips ]
     avg_vrand = np.average(random_samples)
-    avg_vmin = np.average(np.amin(experiment_collated_flips, axis=1))
+    avg_vmin = np.average(np.amin(collated_flips, axis=1))
     return avg_v1, avg_vrand, avg_vmin
 
-def part_one():
-    exp = experiment(100000,1000,10)
-    col_exp = collate_flip_results(exp)
-    # print('exp\n', exp)
-    # print('exp sum\n', col_exp)
-    print('avg1, avgrand, avgmin', experiment_results(col_exp))
+def test_one():
+    data = coin_data(100000,1000,10)
+    col_results = collate_flip_results(data)
+    return experiment_results(col_results)
 
-ans1 = 'b'
-ans2 = 'd'
-# ____________________________________________________________________________
+# LINEAR REGRESSION
 
-# Linear Regression
-# question 5, 6, 7
+def test_two(in_sample, out_sample):
+    target_function = random_target_function()
+    training_set = random_set(in_sample, target_function)
+    weight = linear_percepton(training_set.z, training_set.y)
+    in_error = weight_error(weight, training_set.z, training_set.y)
+    testing_set = random_set(out_sample, target_function)
+    out_error = weight_error(weight, testing_set.z, testing_set.y)
+    return in_error, out_error
+
+def test_three(in_sample):
+    target_function = random_target_function()
+    training_set = random_set(in_sample, target_function)
+    return pla(training_set.z, training_set.y, return_iterations=True)[1]
 
 
+# NONLINEAR TRANSFORMATION
 
-def part_two():
-    # trial_results = perc.trial(100, 1000)
-    # print(trial_results)
-    print(perc.average_trial_results(1000, 100, 1000))
+def moved_circle(data_point):
+    if data_point[1] ** 2 + data_point[2] ** 2 - 0.6 < 0:
+        return -1
+    else:
+        return 1
 
-def part_three():
-    raw_data = perc.n_random_datapoint(10)
-    data, target_function = perc.classify_data_linear_binary_random(raw_data)
-    return perc.binary_percepton(data)[1]
-
-ans5 = 'c'
-ans6 = 'c'
-ans7 = 'a'
-
-# Nonlinear Transformation
-# question 8, 9, 10
-
-def part_four(in_sample, out_sample):
-    raw_data = perc.n_random_datapoint(out_sample)
-    data = perc.classify_data(raw_data, perc.non_linear_target_function)
-    noisy_indices = np.random.choice(out_sample, size=0.1 * out_sample, replace=False)
-    # print("data['classified']")
-    # print(data['classified'])
-    # print('noisy_indices')
-    # print(noisy_indices)
-    data['classified'][noisy_indices] *= -1
-    training_indices = np.random.choice(out_sample, size=in_sample, replace=False)
-    training_raw = data['raw'][training_indices, :]
-    training_classified = data['classified'][training_indices]
-    training_data = { 'raw' : training_raw, 'classified' : training_classified } 
-    linear_weight = perc.linear_percepton(training_data)
-    return perc.check_error(training_data, linear_weight), perc.check_error(data, linear_weight) 
+def test_four(in_sample):
+    training_set = random_set(in_sample, moved_circle)
+    noisy_indices = np.random.choice(in_sample, size=0.1 * in_sample, replace=False)
+    print('noisy_indices')
+    print(noisy_indices)
+    training_set.z[noisy_indices] *= -1
+    # print(training_set.z == training_set.x)
+    print(training_set.z[noisy_indices] *= -1 == training_set.z[noisy_indices])
 
 def part_five(in_sample, out_sample):
     raw_data = perc.n_random_datapoint(out_sample)
@@ -105,10 +102,6 @@ def part_five(in_sample, out_sample):
     linear_weight = perc.linear_percepton(training_data)
     return perc.check_error(training_data, linear_weight), perc.check_error(data, linear_weight), linear_weight
 
-ans8 = 'd'
-ans9 = 'a'
-ans10 = 'b'
-
 def lab(func, num_trials, *func_args):
     trials = np.array([ func(*func_args) for _ in range(num_trials) ])
     # print(trials)
@@ -127,12 +120,33 @@ def lab_two(func, num_trials, *func_args):
     return np.mean(errors, axis=0), np.mean(linear_weights, axis=0)
 
 def main():
-    part_two()
-    # print(lab(part_three, 1000))
-    # print(lab(part_four, 1000, 1000, 2000))
-    # print(lab_two(part_five, 1000, 1000, 2000))
-    pass
+    output(simulations)
 
+def simulations():
+    que ={}
+    # avg_v1, avg_vrand, avg_vmin = test_one()
+    # que[1] = ("v min :", avg_vmin)
+    # in_error, out_error = experiment(test_two, [100, 1000], 1000)
+    # que[5] = ("in sample error :", in_error)
+    # que[6] = ("out sample error :", out_error)
+    # iterations = experiment(test_three, [10], 1000)
+    # que[7] = ("iterations :", iterations)
+    test_four(100)
+    return que
+
+
+ans = {
+        1 : 'b',
+        2 : 'd',
+        3 : 'e',
+        4 : 'b',
+        5 : 'c',
+        6 : 'c',
+        7 : 'a',
+        8 : 'd',
+        9 : 'a',
+        10 : 'b',
+        }
 
 if __name__ == '__main__':
     main()
