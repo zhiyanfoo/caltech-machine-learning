@@ -1,10 +1,13 @@
+import os
 import sys
-sys.path.insert(0, '/Users/zhiyan/Courses/caltech_machine_learning/ass2')
 
-import np_percepton
+above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, above_dir)
 
+from tools import *
 import numpy as np
 
+from math import ceil
 from sympy import exp, log, sqrt, power
 from sympy import Eq
 from sympy import Symbol
@@ -17,23 +20,11 @@ from scipy.integrate import quad
 
 np.random.seed(0)
 
-def vc_inequality_right_side(growth_function, error, datapoints):
-    return 4 * growth_function(2*datapoints) * exp(-1 / 8 * error**2 * datapoints) 
-
-def num_datapoints_needed(probability, growth_function, error, approximate_datapoints_needed):
-    n = Symbol('n')
-    return nsolve(probability - vc_inequality_right_side(growth_function, error, n), n, approximate_datapoints_needed)
-
-
-# nsolve can't handle this
-# print(num_datapoints_needed(1 - 0.95, lambda x : x ** 10, 0.05, 420000))
+# GENERALIZATION ERROR
 
 def solved_vc_inequality(probability, error, approximate_datapoints_needed):
     n = Symbol('n')
     return nsolve(log(4) + 10 * log(2*n) - 1/8 * error ** 2 * n - log(probability), n, approximate_datapoints_needed)
-
-def question_one():
-    return solved_vc_inequality(1 - 0.95, 0.05, 400000)
 
 def generate_growth_function_bound(d_vc):
     def growth_function_bound(n):
@@ -52,7 +43,7 @@ def parrondo_van_den_broek_right(error, n, delta, growth_function):
 def devroye(error, n, delta, growth_function):
     return sqrt(1/(2*Decimal(n)) * (4 * error * (1 + error) + log(4 * growth_function(Decimal(n**2))/Decimal(delta))))
 
-def question_two():
+def test_two_plot():
     e = Symbol('e')
     y = Symbol('y')
     n = Symbol('n')
@@ -64,9 +55,21 @@ def question_two():
     # plot_implicit(Eq(e, devroye(e, n, 0.05, growth_function_bound)), (n,100, 1000), (e,0,5))
     p1.extend(p2)
     p1.show()
-    print(nsolve(Eq(devroye(e, 10000, 0.05, growth_function_bound), e), 1))
+    # print(nsolve(Eq(devroye(e, 10000, 0.05, growth_function_bound), e), 1))
 
-def question_three():
+def test_two():
+    e = Symbol('e')
+    y = Symbol('y')
+    n = Symbol('n')
+    growth_function_bound = generate_growth_function_bound(50)
+    a = original_vc_bound(10000, 0.05, growth_function_bound)
+    b = nsolve(Eq(rademacher_penalty_bound(10000, 0.05, growth_function_bound), y), 1)
+    c = nsolve(Eq(parrondo_van_den_broek_right(e, 10000, 0.05, growth_function_bound), e), 1)
+    d = nsolve(Eq(devroye(e, 10000, 0.05, growth_function_bound), e), 1)
+    return a, b, c, d
+
+
+def test_three():
     e = Symbol('e')
     y = Symbol('y')
     n = Symbol('n')
@@ -76,6 +79,8 @@ def question_three():
     c = nsolve(Eq(parrondo_van_den_broek_right(e, 5, 0.05, growth_function_bound), e), 1)
     d = nsolve(Eq(devroye(e, 5, 0.05, growth_function_bound), e), 1)
     return a, b, c, d
+
+# BIAS AND VARIANCE 
 
 def target_function(x):
     return np.sin(np.pi * x)
@@ -305,72 +310,44 @@ def np_weights(data):
     y = data['classified']
     return np.linalg.lstsq(x,y)
 
-
-ans1 = 'd' # 452956.864723099
-ans2 = 'c' # computer couldn't handle devroye plotting
-ans3 = 'c'
-ans4 = 'e'
-ans5 = 'b'
-ans6 = 'a'
-ans7 = 'c'
-ans8 = 'c'
-ans9 = 'b'
-ans10 = 'dxe'
-
 def main():
-    # print(question_one())
-    # question_two()
-    # print(question_three())
-    # print(question_four())
-    # print(question_five())
-    # print(question_six())
-    # print(question_seven())
-    # print(questions7_least_error())
-    print(question8_find_breakpoint())
-    pass
+    output(simulations)
+
+def simulations():
+    que ={}
+    # sample_size = ceil(solved_vc_inequality(1 - 0.95, 0.05, 400000))
+    # que[1] = ("sample size needed :", sample_size)
+    original_vc_bound, rademacher_penalty_bound, parrondo_van_den_broek_bound, devroye_bound = test_two()
+    que[2] = ("Bounds for N=10000",
+            "\noriginal vc : " + str(original_vc_bound)
+            + "\n" + "rademacher penalty : " + str(rademacher_penalty_bound)
+            + "\n" + "parrondo and van den broek : " + str(parrondo_van_den_broek_bound)
+            + "\n" + "devroye : "  + str(devroye_bound)
+            + "\n"
+            )
+    original_vc_bound, rademacher_penalty_bound, parrondo_van_den_broek_bound, devroye_bound = test_three()
+    que[3] = ("Bounds for N=5",
+            "\noriginal vc : " + str(original_vc_bound)
+            + "\n" + "rademacher penalty : " + str(rademacher_penalty_bound)
+            + "\n" + "parrondo and van den broek : " + str(parrondo_van_den_broek_bound)
+            + "\n" + "devroye : "  + str(devroye_bound)
+            + "\n"
+            )
+    return que
+
+
+ans = {
+        1 : 'd',
+        2 : 'd',
+        3 : 'c',
+        4 : 'e',
+        5 : 'b',
+        6 : 'a',
+        7 : 'c',
+        8 : 'c',
+        9 : 'b',
+        10 : 'dxe',
+        }
 
 if __name__ == '__main__':
     main()
-
-
-    # print('weights')
-    # print(weights)
-    # import matplotlib.pyplot as plt
-
-    # v = np.linspace(-1,1,100)
-    # x = trials[4]['raw']
-    # print('x')
-    # print(x)
-    # y = trials[4]['classified']
-    # print('y')
-    # print(y)
-    # plt.plot(x, y, 'o', label='Original data', markersize=10)
-    # plt.plot(v, weights[4][0][0]*v + weights[4][1][0], 'r', label='lstsqu')
-    # plt.legend()
-    # plt.show()
-
-    # import matplotlib.pyplot as plt
-
-    # v = np.linspace(-1,1,100)
-    # x = trials[4]['raw']
-    # y = trials[4]['classified']
-    # plt.plot(x, y, 'o', label='Original data', markersize=10)
-    # plt.plot(v, gradients[4][0][0]*v, 'r', label='lstsqu')
-    # plt.plot(v, alt_gradients[4]*v, 'r', label='calc', color='g')
-    # plt.legend()
-    # plt.show()
-
-    # print('gradients')
-    # print(gradients)
-    # print('alt_gradients')
-    # print(alt_gradients)
-    # print('np_weights')
-    # print(np_gradients)
-
-    # import matplotlib.pyplot as plt
-    # x = np.linspace(-1,1,100)
-    # plt.plot(x, target_function(x), 'o', label='Original data', markersize=1)
-    # plt.plot(x, hypothesess_parameters[1]*x, 'r', label='line')
-    # plt.plot(x, hypothesess_parameters[2][0]*x, 'r', label='linear', color='g')
-    # # plt.legend()
-    # plt.show()

@@ -1,100 +1,24 @@
-import numpy as np
-from scipy.special import comb
-def hoeffding_inequality_sample_size_needed(probability, error, num_hypothesis):
-    return np.log(probability/2/num_hypothesis)/-2/error**2
-
-def question_one_two_three():
-    return hoeffding_inequality_sample_size_needed(0.03, 0.05, 1), hoeffding_inequality_sample_size_needed(0.03, 0.05, 10), hoeffding_inequality_sample_size_needed(0.03, 0.05, 100)
-
-
-# find the growth function of the two interval hypothesis set
-def growth_function_two_interval(n):
-    return 2 * (first_black(n) + comb(n-1,2) + n)
-
-def new_growth_function_two_interval(n):
-    return first_black_new(n) + comb(n+1,2) + 1
-
-
-def first_black(n):
-    total = 0
-    for i in range(n-3):
-        total += first_white(n-i-1)
-    return total
-
-def first_white(n):
-    total = 0
-    for i in range(n-2):
-        total += second_black(n-i-1)
-    return total
-
-def second_black(n):
-    # total = 0
-    # for i in range(n-1):
-    #     total += 1
-    return n - 1
-
-def first_black_new(n):
-    total = 0
-    d = n + 1
-    for i in range(d-3):
-        total += second_black_new(d-i-1)
-    return total
-
-def second_black_new(d):
-    total = 0
-    for i in range(d-2):
-        total += third_black_new(d-i-1)
-    return total
-
-def third_black_new(d):
-    total = 0
-    for i in range(d-1):
-        total += d-i-1
-    return total
-
-def growth_function_two_interval_analytical(n):
-    return 2 * (sum([ comb(n-i-1, 2) for i in range(1, n-3+1) ]) + comb(n-1,2) + n)
-
-def growth_function_option_a(n):
-    return comb(n+1, 4)
-
-def growth_function_option_b(n):
-    return comb(n+1, 2) + 1
-
-def growth_function_option_c(n):
-    return comb(n+1, 4) + comb(n+1, 2) + 1
-
-def growth_function_option_d(n):
-    return comb(n+1, 4) + comb(n+1, 3) + comb(n+1, 2) + comb(n+1, 1) + 1
-
-def question_seven():
-    return [ 
-            (
-            # growth_function_two_interval(n),
-        # growth_function_two_interval_analytical(n),
-        # growth_function_option_a(n),
-        # growth_function_option_b(n),
-        growth_function_option_c(n),
-        # growth_function_option_d(n),
-        new_growth_function_two_interval(n),
-        ) for n in range(4, 14) ] 
-
-
-
 def main():
-    # print(question_one_two_three())
-    print(question_seven())
+    output(ans)
 
-ans1 = 'b'
-ans2 = 'c'
-ans3 = 'd'
-ans4 = 'aXb' 
-ans5 = 'eXb' # growth functions have to be polynominal or 2^N
-ans6 = 'c'
-ans7 = 'e'
-ans8 = 'd'
-ans9 = 'aXd'
-ans10 = 'b'
+def output(ans):
+    print("no simulations required for this weeks assignment")
+    print("displaying mutiple choice answers instead")
+    for key in sorted(ans.keys()):
+        print("""question""", key, ":", ans[key])
+
+ans = {
+        1 : 'b',
+        2 : 'c',
+        3 : 'd',
+        4 : 'aXb',
+        5 : 'eXb',
+        6 : 'c',
+        7 : 'e',
+        8 : 'd',
+        9 : 'aXd',
+        10 : 'b',
+        }
 
 if __name__ == '__main__':
     main()

@@ -1,61 +1,125 @@
-import random 
+import os
+import sys
 
-# question 1
+above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, above_dir)
 
-random.seed(0)
+from tools import *
+import numpy as np
 
-def average(li):
-    return sum(li) / len(li)
+np.random.seed(0)
 
-def flip():
-    return random.randint(0,1)
+# HOEFFDING INEQUALITY 
 
-def coin_result(num_flips):
-    return [ flip() for i in range(num_flips) ]
+def coin_data(num_trials, sample_size, num_flips):
+    return np.random.randint(2, size=(num_trials, sample_size, num_flips))
 
-def trial(sample_size, num_flips):
-    return [ coin_result(num_flips) for i in range(sample_size) ]
+def collate_flip_results(coin_data):
+    return np.sum(coin_data, axis=2)
 
-def experiment(num_trials, sample_size, num_flips):
-    return [ trial(sample_size, num_flips) for i in range(num_trials) ]
+def experiment_results(collated_flips):
+    avg_v1 = np.average(collated_flips[:,0])
+    random_samples = [ trial[np.random.randint(len(trial))] 
+            for trial in collated_flips ]
+    avg_vrand = np.average(random_samples)
+    avg_vmin = np.average(np.amin(collated_flips, axis=1))
+    return avg_v1, avg_vrand, avg_vmin
 
-def v(trial, n):
-    return average(trial[n])
+def test_one():
+    data = coin_data(100000,1000,10)
+    col_results = collate_flip_results(data)
+    return experiment_results(col_results)
 
-def v1(trial):
-    return v(trial, 0)
+# LINEAR REGRESSION
 
-def v_rand(trial):
-    return v(trial, random.randint(0, len(trial) - 1))
+def test_two(in_sample, out_sample):
+    target_function = random_target_function()
+    training_set = random_set(in_sample, target_function)
+    weight = linear_percepton(training_set.z, training_set.y)
+    in_error = weight_error(weight, training_set.z, training_set.y)
+    testing_set = random_set(out_sample, target_function)
+    out_error = weight_error(weight, testing_set.z, testing_set.y)
+    return in_error, out_error
 
-# def v_min(trial):
-    # return v(trial, min([ (sum(trial[i]), i) for i in range(len(trial)) ])[1])
-
-# def experiment_results(experiment):
-#     return [ [v1(trial), v_rand(trial), v_min(trial)] for trial in experiment ] 
-
-def experiment_results(experiment):
-    return [ [v1(trial), v_rand(trial)] for trial in experiment ] 
-
-def mean_experiment_results(experiment_results):
-    return [ average(result) for result in zip(*experiment_results) ]
-
-def question1():
-    exp = experiment(100000, 1000, 10)
-    # print(exp)
-    exp_res = experiment_results(exp)
-    # print(exp_res)
-    # print(list(zip(*exp_res)))
-    mean_exp_res = mean_experiment_results(exp_res)
-    print(mean_exp_res)
+def test_three(in_sample):
+    target_function = random_target_function()
+    training_set = random_set(in_sample, target_function)
+    return pla(training_set.z, training_set.y, return_iterations=True)[1]
 
 
-# question 2
+# NONLINEAR TRANSFORMATION
 
+def moved_circle(data_point):
+    if data_point[1] ** 2 + data_point[2] ** 2 - 0.6 < 0:
+        return -1
+    else:
+        return 1
+
+def test_four(in_sample, out_sample):
+    training_set = random_set(in_sample, moved_circle)
+    noisy_indices = np.random.choice(in_sample, size=0.1 * in_sample, replace=False)
+    training_set.y[noisy_indices] *= -1
+    weight = linear_percepton(training_set.z, training_set.y)
+    in_error_no_transform = weight_error(weight, training_set.z, training_set.y)
+    training_set.z = transform(training_set.z)
+    weight = linear_percepton(training_set.z, training_set.y)
+    in_error_transform = weight_error(weight, training_set.z, training_set.y)
+    testing_set = random_set(out_sample, moved_circle, transform)
+    noisy_indices = np.random.choice(out_sample, size=0.1 * out_sample, replace=False)
+    testing_set.y[noisy_indices] *= -1
+    out_error_transform = weight_error(weight, testing_set.z, testing_set.y)
+    return in_error_no_transform, weight, out_error_transform
+
+def transform(x):
+    """
+    transform             
+    1 x1 x2  --->   1 x1 x2 x1x2 x1**2 x2**2
+    """
+    ones = x[:, 0]
+    x1 = x[:, 1]
+    x2 = x[:, 2]
+    x1_sqr = x1**2
+    x2_sqr = x2**2
+    x1x2 = x1 * x2
+    return np.stack([ones, x1, x2, x1x2, x1_sqr, x2_sqr], axis=1)
 
 def main():
-    question1()
+    print("The following simulations are computationally intensive")
+    output(simulations)
+
+def simulations():
+    que ={}
+    avg_v1, avg_vrand, avg_vmin = test_one()
+    que[1] = ("v min :", avg_vmin)
+    in_error, out_error = experiment(test_two, [100, 1000], 1000)
+    que[5] = ("in sample error :", in_error)
+    que[6] = ("out sample error :", out_error)
+    iterations = experiment(test_three, [10], 1000)
+    que[7] = ("iterations :", iterations)
+    results = np.array([ test_four(100, 1000) for _ in range(1000) ], dtype=object)
+    in_error_no_transform = np.mean(results[:,0])
+    weight = np.mean(results[:,1], axis=0)
+    out_error_transform = np.mean(results[:,2])
+    que[8] = ("in sample error -- without higher dimension transformation :",
+            in_error_no_transform)
+    que[9] = ("higher dimensional weights :", weight)
+    que[10] = ("out of sample error -- with higher dimension transformation :",
+            out_error_transform)
+    return que
+
+
+ans = {
+        1 : 'b',
+        2 : 'd',
+        3 : 'e',
+        4 : 'b',
+        5 : 'c',
+        6 : 'c',
+        7 : 'a',
+        8 : 'd',
+        9 : 'a',
+        10 : 'b',
+        }
 
 if __name__ == '__main__':
     main()
-
