@@ -48,7 +48,7 @@ class DataML:
     def __repr__(self):
         z_repr = "input : z\n" + str(self.z)
         y_repr = "output : y\n" + str(self.y)
-        return z_repr +"\n" + y_repr
+        return z_repr + "\n" + y_repr
 
 def get_y(target_function, x):
     return np.apply_along_axis(target_function, 1, x)
