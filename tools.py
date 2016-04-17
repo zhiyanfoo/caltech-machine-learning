@@ -1,5 +1,4 @@
 import numpy as np
-np.random.seed(0)
 
 from itertools import chain
 

@@ -1,9 +1,8 @@
+import os
 import sys
-sys.path.insert(0, '/Users/zhiyan/Courses/caltech_machine_learning/ass2')
 
-import np_percepton
-
-import numpy as np
+above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, above_dir)
 
 import mpmath as mp
 from mpmath import exp, ln
@@ -12,50 +11,16 @@ from mpmath import e
 
 import math
 
+from tools import *
+import numpy as np
+
 from itertools import cycle
 from functools import partial
-# from sympy import Eq
-# from sympy import Symbol
-# from sympy import solve, nsolve
-# from sympy import plot_implicit
-# from sympy.plotting import plot
-# from decimal import Decimal
-
-# from scipy.integrate import quad
 
 np.random.seed(0)
-LEARNING_RATE = 0.01
 
-# Linear Regression Error
-
-def question1():
-    return datapoints_needed(0.008, 0.1, 8)
-
-    
-def datapoints_needed(in_sample_error, variance, dimension):
-    return (dimension + 1) * (1 - in_sample_error / variance) ** -1
-
-def visualize():
-    import matplotlib.pyplot as plt
-    x = np.linspace(0.5,4,100)
-    # plt.plot(x, x, 'o', label='Original data', markersize=4)
-    plt.plot(x, 2 * x - 1, 'r', markersize=4, color='blue')
-    plt.plot(x**0.5, (2 * x - 1)**0.5, 'r', markersize=4)
-    plt.axis((0,4,0,4))
-    plt.show()
-
-# Gradient Descent
-
-def question5():
-    return find_threshold(
-            in_error,
-            in_error_gradient,
-            [1,1],
-            0.1,
-            mpf(10)**mpf(-14),
-            0
-            )
-
+def datapoints_needed(in_sample_error, standard_deviation, dimension):
+    return 1 / (1 - in_sample_error / standard_deviation ** 2) * (dimension + 1)
 
 def in_error(u, v):
     return (u*exp(v) - mpf(2)*v*exp(-u)) ** mpf(2)
@@ -73,7 +38,6 @@ def approximately_equal(a, b, c=6):
     return abs(a-b) < 10 ** -c
 
 def find_threshold(function, gradient, initial_conditions, learning_rate, minimum_value, iterations):
-    print(function(*initial_conditions))
     if function(*initial_conditions) < minimum_value:
         return function(*initial_conditions), initial_conditions, iterations
     next_conditions = [ 
@@ -83,21 +47,11 @@ def find_threshold(function, gradient, initial_conditions, learning_rate, minimu
             ]
     return find_threshold(function, gradient, next_conditions, learning_rate, minimum_value, iterations + 1)
 
-def question6():
-    gradient = [in_error_derivative_u, in_error_derivative_v]
-    print(find_threshold_coordinate_descent(
-            in_error, gradient, [1,1], mpf('0.1'), mpf(10) ** mpf(-1)))
-    return coordinate_descent_max_iterations(
-        in_error, gradient, [1,1], mpf('0.1'), 30)
-
-
 def find_threshold_coordinate_descent(
     function, gradient, initial_conditions, learning_rate, minimum_value):
     def descend_ith_dim(ith, conditions, iterations):
         "dim : dimension"
         if function(*conditions) < minimum_value:
-            print(minimum_value)
-            print(function(*conditions) < minimum_value)
             return function(*conditions), conditions, iterations
         i = next(ith)
         conditions[i] = conditions[i] \
@@ -112,7 +66,6 @@ def coordinate_descent_max_iterations(
     def descend_ith_dim(ith, conditions, iterations):
         "dim : dimension"
         if iterations == max_iterations:
-            print(function(*conditions))
             return function(*conditions), conditions, iterations
         i = next(ith)
         conditions[i] = conditions[i] \
@@ -122,79 +75,108 @@ def coordinate_descent_max_iterations(
             cycle(range(len(gradient))),
             initial_conditions, 0)
 
-def question8():
-    return average_trial_results(trial, 100, 1000, 100)
-
-def average_trial_results(trial, in_sample, out_sample, total_trials):
-    trials = np.array([ trial(in_sample, out_sample) for _ in range(total_trials) ])
-    return np.mean(trials, axis=0)
-
-
 def trial(in_sample, out_sample):
-    training_raw_data = np_percepton.n_random_datapoint(in_sample)
-    training_data, target_function = np_percepton.classify_data_linear_binary_random(training_raw_data)
-    raw_testing_data = np_percepton.n_random_datapoint(out_sample)
-    testing_data = np_percepton.classify_data(raw_testing_data, target_function)
-    # training_indices = np.random.choice(out_sample, size=in_sample, replace=False)
-    # training_raw = data['raw'][training_indices, :]
-    # training_classified = data['classified'][training_indices]
-    weights = stochastic_logistic_regression(training_data)
-    cross_entrophy_error = average_cross_entrophy_error(testing_data, weights)
-    # out_sample_error = test_weights(weights, testing_data)
-    print(cross_entrophy_error)
-    return weights, cross_entrophy_error
+    target_function = random_target_function()
+    training_set = random_set(in_sample, target_function)
+    weight, iterations = stochastic_logistic_regression(training_set)
+    testing_set = random_set(out_sample, target_function)
+    out_of_sample_error = error(cross_entrophy_error, testing_set, weight)
+    return weight, iterations, out_of_sample_error
 
-def average_cross_entrophy_error(testing_data, weights):
-    error_func = cross_entrophy_error
-    total_cross_entrophy_error =  sum(
-            [ error_func(
-                testing_data['raw'][i],
-                testing_data['classified'][i],
-                weights)
-                for i in range(len(testing_data['raw']))
-                ])
-    return total_cross_entrophy_error / len(testing_data['raw'])
-
-def test_weights(weights, testing_data):
-    total_misclassified = sum([ 1 
-        for i in range(len(testing_data['raw']))
-        if np_percepton.sign(np.dot(testing_data['raw'][i], weights))
-                != testing_data['classified'][i] ])
-    print('total_misclassified')
-    print(total_misclassified)
-    return total_misclassified / len(testing_data['raw'])
-    
-def stochastic_logistic_regression(training_data):
+def stochastic_logistic_regression(training_set):
     gradient = [ partial(cross_entrophy_error_ith_derivative, i=j)
-        for j in range(len(training_data['raw'][0])) ]
-    weights = np.zeros(len(training_data['raw'][0]))
+        for j in range(len(training_set.z[0])) ]
+    weight = np.zeros(len(training_set.z[0]))
     func = (cross_entrophy_error, gradient)
-    old_run_weights = epoch(training_data, weights, *func)
-    new_run_weights = epoch(training_data, old_run_weights, *func)
+    old_run_weight = epoch(training_set, weight, *func)
+    new_run_weight = epoch(training_set, old_run_weight, *func)
     i = 0
-    while np.linalg.norm(old_run_weights - new_run_weights) > 0.01:
+    while np.linalg.norm(old_run_weight - new_run_weight) > 0.01:
         i += 1
-        # print(i)
-        old_run_weights = new_run_weights
-        new_run_weights = epoch(training_data, old_run_weights, *func)
-    return new_run_weights
+        old_run_weight = new_run_weight
+        new_run_weight = epoch(training_set, old_run_weight, *func)
+    return new_run_weight, i
 
 def cross_entrophy_error(x, y, w):
     return math.log(1+math.exp(-y * np.dot(x,w)))
+
 def cross_entrophy_error_ith_derivative(x, y, w, i):
     return - (y * x[i]) / (1 + math.exp(y * np.dot(x, w)))
 
-def epoch(training_data, weights, error_function, gradient):
-    data_index_iter = np.random.permutation(len(training_data['raw']))
+def epoch(training_set, weights, error_function, gradient):
+    LEARNING_RATE = 0.01
+    data_index_iter = np.random.permutation(len(training_set.z))
     for i in data_index_iter:
-        x = training_data['raw'][i]
-        y = training_data['classified'][i]
+        x = training_set.z[i]
+        y = training_set.y[i]
         weights = weights - LEARNING_RATE * np.array(
                     [ derivative(x, y, weights) for derivative in gradient ])
     return weights
 
+def error(error_function, testing_set, weights):
+    total_error = sum([error_function(testing_set.z[i], testing_set.y[i], weights)
+        for i in range(len(testing_set.z)) ])
+    mean_error = total_error / len(testing_set.z)
+    return mean_error
+
+def main():
+    tests()
+    print("the following simulations are computationally intensive")
+    output(simulations)
+
+def simulations():
+    que = {}
+    que[1] = ("sample points needed :", datapoints_needed(0.008, 0.1, 8))
+    gradient = [in_error_derivative_u, in_error_derivative_v]
+    value, point, iterations =  find_threshold(in_error, in_error_gradient, [1,1], 0.1, mpf(10)**mpf(-14), 0 )
+    que[5] = ( "gradient descent results", "\n\tvalue : " + str(value) \
+                                           + "\n\tpoint : " + str(point) \
+                                           + " # ans to question 6" \
+                                           + "\n\titerations : " + str(iterations)\
+                                           + " # ans to question 5"
+                                           )
+    gradient = [in_error_derivative_u, in_error_derivative_v]
+    value, point, iterations = coordinate_descent_max_iterations(
+            in_error, gradient, [1,1], mpf('0.1'), 30)
+    que[7] = ( "coordinate gradient descent results", "\n\tvalue : " + str(value) \
+                                           + "\n\tpoint : " + str(point) \
+                                           + "\n\titerations : " + str(iterations)
+                                           )
+    def trial_no_weights(*args):
+        weight, iterations, out_sample_error = trial(*args)
+        return iterations, out_sample_error
+
+    iterations, out_sample_error = experiment(trial_no_weights, [100, 1000], 100)
+    que[8] = ("out of sample cross entrophy error :", out_sample_error)
+    que[9] = ("iterations :", iterations)
+    return que
+
+def tests():
+    test_in_error_derivative_u()
+    test_in_error_derivative_v()
+    test_in_error_gradient()
+    test_in_error()
+
+def test_in_error():
+    error = in_error(0,1)
+    print(error)
+    assert approximately_equal(error, 4)
+
+def test_in_error_derivative_u():
+    error = in_error_derivative_u(0,1)
+    assert approximately_equal(error, 2* ( -2 * (e + 2)))
+    
+def test_in_error_derivative_v():
+    error = in_error_derivative_v(0,1)
+    assert approximately_equal(error, 2 * (-2) * (-2))
+
+def test_in_error_gradient():
+    gradient = in_error_gradient(0,1)
+    results = [ 2* ( -2 * (e + 2)), 2 * (-2) * (-2) ] 
+    assert [ approximately_equal(gradient[i], results[i]) for i in range(len(gradient)) ] 
+
 ans = {
-    1 : 'axc',
+    1 : 'c',
     2 : 'd',
     3 : 'c',
     4 : 'e',
@@ -206,41 +188,5 @@ ans = {
     10 : 'bxe'
         }
 
-def main():
-    # print(question1())
-    # visualize()
-    # print(question5())
-    # print(question6())
-    print(question8())
-    pass
-
-def tests():
-    # test_in_error_derivative_u()
-    # test_in_error_derivative_v()
-    # test_in_error_gradient()
-    # test_in_error()
-    pass
-
-def test_in_error():
-    error = in_error(0,1)
-    print(error)
-    assert approximately_equal(error, 4)
-
-def test_in_error_derivative_u():
-    error = in_error_derivative_u(0,1)
-    print(error)
-    assert approximately_equal(error, 2* ( -2 * (e + 2)))
-    
-def test_in_error_derivative_v():
-    error = in_error_derivative_v(0,1)
-    print(error)
-    assert approximately_equal(error, 2 * (-2) * (-2))
-
-def test_in_error_gradient():
-    gradient = in_error_gradient(0,1)
-    results = [ 2* ( -2 * (e + 2)), 2 * (-2) * (-2) ] 
-    assert [ approximately_equal(gradient[i], results[i]) for i in range(len(gradient)) ] 
-
-if __name__ == '__main__':
-    tests()
+if __name__ == "__main__":
     main()
