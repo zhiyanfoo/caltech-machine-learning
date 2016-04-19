@@ -1,12 +1,17 @@
-import sys 
-sys.path.insert(0, '/Users/zhiyan/Courses/caltech_machine_learning/ass2')
-import np_percepton 
-from np_percepton import sign
+import os
+import sys
+
+above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, above_dir)
 
 import numpy as np
 from numpy import dot
 
 from numpy.linalg import inv
+
+from tools import *
+
+np.random.seed(0)
 
 # REGULARIZATION WITH WEIGHT DECAY
 
@@ -20,37 +25,13 @@ def question2to6():
     # print(question4(training_data, testing_data))
     print(question5(training_data, testing_data))
 
-def question2(training_data, testing_data):
-    weights, transformed_x = learn(training_data)
-    in_error, out_error = [ test_weights(weights, transform(data[:,0:2]), data[:,2])
-            for data in [training_data, testing_data] ]
+def test1(training_data, testing_data):
+    training_set = DataML(training_data, transform)
+    weight = linear_percepton(training_set.z, training_set.y)
+    testing_set = DataML(testing_data, transform)
+    in_error, out_error = [ weight_error(weight, data_set.z, data_set.y)
+            for data_set in [training_set, testing_set] ]
     return in_error, out_error
-
-def test_weights(weights, z, y):
-    # print(z)
-    # print(y)
-    learnt_output = classify(weights, z)
-    return classified_error(learnt_output, y)
-
-def classify(weights, z):
-    vec_sign = np.vectorize(sign)
-    return vec_sign(dot(z, weights))
-
-def classified_error(learnt_output, real_output):
-    equality_array = np.equal(learnt_output, real_output)
-    return 1 - sum(equality_array) / len(equality_array)
-
-def learn(training_data):
-    transformed_x = transform(training_data[:,0:2])
-    return linear_percepton(transformed_x, training_data[:,2]), transformed_x
-
-def linear_percepton(x,y):
-    # print(x)
-    # print(y)
-    xt_x = x.transpose().dot(x)
-    xt_y = x.transpose().dot(y)
-    inv_xt_x = np.linalg.inv(xt_x)
-    return inv_xt_x.dot(xt_y)
 
 def transform(x):
     """
@@ -79,34 +60,13 @@ def transform(x):
     # print(abs_x1_plus_x2[0])
     return np.stack([ones, x1, x2, x1_sqr, x2_sqr, x1x2, abs_x1_minus_x2, abs_x1_plus_x2], axis=1)
 
-def question3(training_data, testing_data):
-    return trial(training_data, testing_data, pow_10(-3))
-
 def trial(training_data, testing_data, a):
     training_set = DataML(training_data, transform)
-    # print(training_set)
     weights = minimize_error_aug(training_set.z, training_set.y, a)
-    in_error, out_error = [ test_weights(weights, tset.z, tset.y)
+    in_error, out_error = [ weight_error(weights, tset.z, tset.y)
         for tset in [training_set, DataML(testing_data, transform)] ]
     return in_error, out_error
 
-class DataML:
-    def __init__(self, data, transform=None):
-        self.x = data[:,:data.shape[1]-1]
-        self.y = data[:,data.shape[1]-1]
-        if transform == None:
-            self.z = self.x
-            self.z_y = data
-        else:
-            self.z = transform(self.x)
-            self.z_y = np.concatenate([self.z, np.array([self.y]).T], axis=1)
-
-    def __repr__(self):
-        z_repr = "input : z\n" + str(self.z)
-        y_repr = "output : y\n" + str(self.y)
-        return z_repr +"\n" + y_repr
-
-            
 def minimize_error_aug(z,y,a):
     """
     minimize
@@ -125,19 +85,36 @@ def question4(training_data, testing_data):
     return trial(training_data, testing_data, pow_10(3))
 
 def question5(training_data, testing_data):
-    return [ trial(training_data, testing_data, pow_10(k))
-        for k in range(-2,3) ]
-
+    return 
 def pow_10(k): 
     return 10**k
 
 # REGULARIZATION FOR POLYNOMIALS
 
 def main():
-    question2to6()
+    output(simulations)
 
-if __name__ == "__main__":
-    main()
+def simulations():
+    que = {}
+    training_data = np.genfromtxt("in.dta")
+    testing_data = np.genfromtxt("out.dta")
+    in_sample_error, out_of_sample_error = test1(training_data, testing_data)
+    que[2] = ("linear regression",
+            "\n\tin sample error : " + str(in_sample_error) + \
+            "\n\tout of sample error : " + str(out_of_sample_error))
+    in_sample_error, out_sample_error = trial(training_data, testing_data, pow_10(-3))
+    que[3] = ("linear regression with weight decay, k=-3",
+            "\n\tin sample error : " + str(in_sample_error) + \
+            "\n\tout of sample error : " + str(out_of_sample_error))
+    in_sample_error, out_sample_error = trial(training_data, testing_data, pow_10(3))
+    que[4] = ("linear regression with weight decay, k=3",
+            "\n\tin sample error : " + str(in_sample_error) + \
+            "\n\tout of sample error : " + str(out_of_sample_error))
+    out_of_sample_errors = [ str(trial(training_data, testing_data, pow_10(k))[1])
+            for k in range(-2,3) ]
+    que[5] = ("linear regression with weight decay, k=-2..2",
+            "\nout of sample errors\n" + "\n".join(out_of_sample_errors))
+    return que
 
 ans = {
         1 : 'b',
@@ -151,4 +128,8 @@ ans = {
         9 : 'a',
         10 : 'e',
         }
+
+if __name__ == "__main__":
+    main()
+
 
