@@ -13,13 +13,8 @@ from hw6 import transform
 
 import numpy as np 
 
-# import cvxopt
 from cvxopt import matrix, solvers
 solvers.options['show_progress'] = False
-
-# from mpmath import mpf
-
-# from itertools import chain
 
 np.random.seed(0)
 
@@ -63,35 +58,6 @@ def trial(in_sample, out_of_sample):
     total_support_vectors = sum([ 1 for x in svm_weight if x >= 10*-3 ])
     return svm_better, total_support_vectors
 
-
-# def trial(in_sample, out_sample):
-#     raw_data = pct.n_random_datapoint(out_sample)
-#     data, linear_target_function = classify_data_linear_binary_random(raw_data)
-#     training_set = DataML(data.z_y[:in_sample])
-#     testing_set = DataML(data.z_y[in_sample:])
-#     pla_weight = binary_percepton(training_set.z, training_set.y)
-#     pla_error = check_error(testing_set.z, testing_set.y, pla_weight)
-#     # print("pla_weight")
-#     # print(pla_weight)
-#     # print("pla_error")
-#     # print(pla_error)
-#     svm_weight = svm(training_set.z, training_set.y).flatten()
-#     # print("svm_weight")
-#     # print(svm_weight)
-#     svm_error = check_error(testing_set.z, testing_set.y, svm_weight)
-#     # print("svm_error")
-#     # print(svm_error)
-#     def helper(x):
-#         if x <= 0:
-#             return 0
-#         else:
-#             return 1
-#     difference = pla_error - svm_error
-#     svm_better = helper(difference)
-#     total_support_vectors = sum([ 1 for x in svm_weight if x >= 10*-3 ])
-#     return svm_better, total_support_vectors
-
-    
 def svm(x, y):
     """
     Minimize
