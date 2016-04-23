@@ -141,4 +141,5 @@ def output(simulations):
     print("simulations done")
     for key in sorted(sim.keys()):
         print("""question""", key)
+        print("".join([ "-" for i in range(len("question ") + len(str(key))) ]))
         print(sim[key][0], sim[key][1])

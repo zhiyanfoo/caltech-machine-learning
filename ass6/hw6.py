@@ -4,26 +4,13 @@ import sys
 above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, above_dir)
 
-import numpy as np
-from numpy import dot
-
-from numpy.linalg import inv
-
 from tools import *
+
+import numpy as np
 
 np.random.seed(0)
 
 # REGULARIZATION WITH WEIGHT DECAY
-
-def question2to6():
-    training_data = np.genfromtxt("in.dta")
-    testing_data = np.genfromtxt("out.dta")
-    errors = question2(training_data, testing_data)
-    # print("errors")
-    # print(errors)
-    # print(question3(training_data, testing_data))
-    # print(question4(training_data, testing_data))
-    print(question5(training_data, testing_data))
 
 def test1(training_data, testing_data):
     training_set = DataML(training_data, transform)
@@ -76,16 +63,11 @@ def minimize_error_aug(z,y,a):
     """
     zz = z.transpose().dot(z)
     zz_plus_ai = zz + a * np.identity(len(zz))
-    inv_zz_plus_ai = inv(zz_plus_ai)
+    inv_zz_plus_ai = np.linalg.inv(zz_plus_ai)
     zy = z.transpose().dot(y)
     inv_zz_plus_ai_zy = inv_zz_plus_ai.dot(zy)
     return inv_zz_plus_ai_zy 
 
-def question4(training_data, testing_data):
-    return trial(training_data, testing_data, pow_10(3))
-
-def question5(training_data, testing_data):
-    return 
 def pow_10(k): 
     return 10**k
 
@@ -131,5 +113,4 @@ ans = {
 
 if __name__ == "__main__":
     main()
-
 
