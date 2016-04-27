@@ -1,7 +1,9 @@
 import os
 import sys
 
-above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+file_dir = os.path.dirname(os.path.abspath(__file__))
+above_dir = os.path.dirname(file_dir)
 sys.path.insert(0, above_dir)
 
 from tools import *
@@ -20,32 +22,6 @@ def test1(training_data, testing_data):
             for data_set in [training_set, testing_set] ]
     return in_error, out_error
 
-def transform(x):
-    """
-    transform             
-    x1 x2  --->   1 x1 x2 x1**2 x2**2 x1x2 |x1 - x2| |x1 + x2|
-    """
-    ones = np.ones(len(x))
-    # print('ones')
-    # print(ones)
-    x1 = x[:,0]
-    x2 = x[:,1]
-    x1_sqr = x1**2
-    # print('x1_sqr')
-    # print(x1_sqr[0])
-    x2_sqr = x2**2
-    # print('x2_sqr')
-    # print(x2_sqr[0])
-    x1x2 = x1 * x2
-    # print('x1x2')
-    # print(x1x2[0])
-    abs_x1_minus_x2 = abs(x1-x2)
-    # print('abs_x1_minus_x2')
-    # print(abs_x1_minus_x2[0])
-    abs_x1_plus_x2 = abs(x1+x2)
-    # print('abs_x1_plus_x2')
-    # print(abs_x1_plus_x2[0])
-    return np.stack([ones, x1, x2, x1_sqr, x2_sqr, x1x2, abs_x1_minus_x2, abs_x1_plus_x2], axis=1)
 
 def trial(training_data, testing_data, a):
     training_set = DataML(training_data, transform)
@@ -78,8 +54,8 @@ def main():
 
 def simulations():
     que = {}
-    training_data = np.genfromtxt("in.dta")
-    testing_data = np.genfromtxt("out.dta")
+    training_data = np.genfromtxt(os.path.join(file_dir, "in.dta"))
+    testing_data = np.genfromtxt(os.path.join(file_dir, "out.dta"))
     in_sample_error, out_of_sample_error = test1(training_data, testing_data)
     que[2] = ("linear regression",
             "\n\tin sample error : " + str(in_sample_error) + \

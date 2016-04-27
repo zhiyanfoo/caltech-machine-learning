@@ -2,6 +2,9 @@ import numpy as np
 
 from itertools import chain
 
+from cvxopt import matrix, solvers
+solvers.options['show_progress'] = False
+
 # DATA CREATION
 
 def n_random_datapoint(n):
@@ -106,6 +109,34 @@ def linear_percepton(x,y):
     inv_xt_x = np.linalg.inv(xt_x)
     return inv_xt_x.dot(xt_y)
 
+# SUPPORT VECTOR MACHINE
+
+def svm(x, y):
+    """
+    Minimize
+    1/2 * w^T w
+    subject to
+    y_n (w^T x_n + b) >= 1
+    """
+    weights_total = len(x[0])
+    I_n = np.identity(weights_total-1)
+    P_int =  np.vstack(([np.zeros(weights_total-1)], I_n))
+    zeros = np.array([np.zeros(weights_total)]).T
+    P = np.hstack((zeros, P_int))
+    q = np.zeros(weights_total)
+    G = -1 * vec_to_dia(y).dot(x)
+    h = -1 * np.ones(len(y))
+    matrix_arg = [ matrix(x) for x in [P,q,G,h] ]
+    sol = solvers.qp(*matrix_arg)
+    return np.array(sol['x']).flatten()
+
+def vec_to_dia(y):
+    dia = [ [ 0 for i in range(i) ] 
+            + [y[i]] 
+            + [ 0 for i in range(i,len(y) - 1) ]  
+            for i in range(len(y)) ]
+    return np.array(dia, dtype='d')
+
 # TESTING 
 
 def weight_error(weight, z, y):
@@ -143,3 +174,18 @@ def output(simulations):
         print("""question""", key)
         print("".join([ "-" for i in range(len("question ") + len(str(key))) ]))
         print(sim[key][0], sim[key][1])
+
+def transform(x):
+    """
+    transform             
+    x1 x2  --->   1 x1 x2 x1**2 x2**2 x1x2 |x1 - x2| |x1 + x2|
+    """
+    ones = np.ones(len(x))
+    x1 = x[:,0]
+    x2 = x[:,1]
+    x1_sqr = x1**2
+    x2_sqr = x2**2
+    x1x2 = x1 * x2
+    abs_x1_minus_x2 = abs(x1-x2)
+    abs_x1_plus_x2 = abs(x1+x2)
+    return np.stack([ones, x1, x2, x1_sqr, x2_sqr, x1x2, abs_x1_minus_x2, abs_x1_plus_x2], axis=1)

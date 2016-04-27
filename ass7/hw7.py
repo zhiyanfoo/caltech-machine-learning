@@ -9,12 +9,7 @@ from tools import *
 hw6_dir_path = os.path.join(tools_dir_path,"ass6")
 sys.path.insert(0, hw6_dir_path)
 
-from hw6 import transform
-
 import numpy as np 
-
-from cvxopt import matrix, solvers
-solvers.options['show_progress'] = False
 
 np.random.seed(0)
 
@@ -41,9 +36,7 @@ def trial(in_sample, out_of_sample):
     target_function = random_target_function()
     training_set = random_set(in_sample, target_function)
     pla_weight = pla(training_set.z, training_set.y) 
-    # print("pla_weight : ", pla_weight)
     svm_weight = svm(training_set.z, training_set.y)
-    # print("svm_weight : ", svm_weight)
     testing_set = random_set(out_of_sample, target_function)
     pla_error, svm_error = [ weight_error(weight, testing_set.z, testing_set.y)
             for weight in
@@ -57,64 +50,6 @@ def trial(in_sample, out_of_sample):
     svm_better = helper(difference)
     total_support_vectors = sum([ 1 for x in svm_weight if x >= 10*-3 ])
     return svm_better, total_support_vectors
-
-def svm(x, y):
-    """
-    Minimize
-    1/2 * w^T w
-    subject to
-    y_n (w^T x_n + b) >= 1
-    """
-    weights_total = len(x[0])
-    I_n = np.identity(weights_total-1)
-    P_int =  np.vstack(([np.zeros(weights_total-1)], I_n))
-    # print("P_int")
-    # print(P_int)
-    zeros = np.array([np.zeros(weights_total)]).T
-    # print("zeros")
-    # print(zeros)
-    P = np.hstack((zeros, P_int))
-    # print("P")
-    # print(P)
-    q = np.zeros(weights_total)
-    # print("q")
-    # print(q)
-    G = -1 * vec_to_dia(y).dot(x)
-    # print("G")
-    # print(G)
-    h = -1 * np.ones(len(y))
-    # print("h")
-    # print(h)
-    matrix_arg = [ matrix(x) for x in [P,q,G,h] ]
-    sol = solvers.qp(*matrix_arg)
-    return np.array(sol['x']).flatten()
-    
-def alt_svm(x, y):
-    """weights include """
-    weights_total = len(x[0])
-    P = np.identity(weights_total)
-    # print("P")
-    # print(P)
-    q = np.zeros(weights_total)
-    # print("q")
-    # print(q)
-    G = -1 * vec_to_dia(y).dot(x)
-    # print("G")
-    # print(G)
-    h = -1 * np.ones(len(y))
-    # print("h")
-    # print(h)
-    matrix_arg = [ matrix(x) for x in [P,q,G,h] ]
-    sol = solvers.qp(*matrix_arg)
-    return np.array(sol['x']).flatten()
-
-def vec_to_dia(y):
-    dia = [ [ 0 for i in range(i) ] 
-            + [y[i]] 
-            + [ 0 for i in range(i,len(y) - 1) ]  
-            for i in range(len(y)) ]
-    return np.array(dia, dtype='d')
-
 
 ans = {
         1 : 'd',
@@ -169,6 +104,7 @@ def simulations():
     que[5] = ("smallest out of sample errors :", str(first_error) + ", " + str(second_error))
     svm_better, total_support_vectors  = experiment(trial, [10, 100], 1000)
     que[8] = ("svm better than pla : ", svm_better)
+    svm_better, total_support_vectors  = experiment(trial, [100, 100], 1000)
     que[9] = ("svm better than pla : ", svm_better)
     que[10] = ("total support vectors : ", total_support_vectors)
     return que
