@@ -32,9 +32,9 @@ def random_set(n, target_function, transform=None):
 class DataML:
     def __init__(self, data, transform=None):
         xy_as_tuple = type(data) == tuple or type(data) == list and len(data) == 2
-        if xy_as_tuple :
-            self.x = data[0]
-            self.y = data[1]
+        if xy_as_tuple:
+            self.x = np.copy(data[0])
+            self.y = np.copy(data[1])
         else:
             self.x = data[:,:data.shape[1]-1]
             self.y = data[:,data.shape[1]-1]
