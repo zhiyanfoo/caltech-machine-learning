@@ -9,6 +9,7 @@ from tools import *
 
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.cross_validation import cross_val_score, KFold
 
 import numpy as np 
 
@@ -22,15 +23,18 @@ def allexcept(digit, *col_data_sets):
 
 def trial_all_except(training_set, testing_set, digit, kernel, c, degree=None):
     training_set, testing_set = allexcept(digit, training_set, testing_set)
-    polysvm = SVC(kernel=kernel, C=c, degree=degree)
-    polysvm.fit(training_set.z, training_set.y)
-    training_predicted = polysvm.predict(training_set.z)
+    if degree == None:
+        svm = SVC(kernel=kernel, C=c)
+    else:
+        svm = SVC(kernel=kernel, C=c, degree=degree)
+    svm.fit(training_set.z, training_set.y)
+    training_predicted = svm.predict(training_set.z)
     in_sample_error = classified_error(training_predicted, training_set.y)
-    testing_predicted = polysvm.predict(testing_set.z)
+    testing_predicted = svm.predict(testing_set.z)
     out_of_sample_error = classified_error(testing_predicted, testing_set.y)
     confusion = confusion_matrix(training_set.y, training_predicted)
     report = classification_report(training_set.y, training_predicted)
-    return polysvm.n_support_, (in_sample_error, out_of_sample_error), report, confusion
+    return svm.n_support_, (in_sample_error, out_of_sample_error), report, confusion
 
 def a_vs_b(a, b, *col_data_sets):
     copies_of_data_sets = [ DataML((data_set.z, data_set.y)) for data_set in col_data_sets ]
@@ -46,27 +50,40 @@ def a_vs_b(a, b, *col_data_sets):
 
 def trial_a_vs_b(training_set, testing_set, a, b, kernel, c, degree=None):
     training_set, testing_set = a_vs_b(a, b, training_set, testing_set)
-    polysvm = SVC(kernel=kernel, C=c, degree=degree)
-    polysvm.fit(training_set.z, training_set.y)
-    training_predicted = polysvm.predict(training_set.z)
+    if degree == None:
+        svm = SVC(kernel=kernel, C=c)
+    else:
+        svm = SVC(kernel=kernel, C=c, degree=degree)
+    svm.fit(training_set.z, training_set.y)
+    training_predicted = svm.predict(training_set.z)
     in_sample_error = classified_error(training_predicted, training_set.y)
-    testing_predicted = polysvm.predict(testing_set.z)
+    testing_predicted = svm.predict(testing_set.z)
     out_of_sample_error = classified_error(testing_predicted, testing_set.y)
     confusion = confusion_matrix(training_set.y, training_predicted)
     report = classification_report(training_set.y, training_predicted)
-    return polysvm.n_support_, (in_sample_error, out_of_sample_error), report, confusion
+    return svm.n_support_, (in_sample_error, out_of_sample_error), report, confusion
+
+def best_c(training_set):
+    training_set = a_vs_b(1, 5, training_set)[0]
+    svcs = [ SVC(kernel='poly', C=c, degree=2)
+            for c in [0.0001, 0.001, 0.01, 0.1, 1] ]
+    cv = KFold(n=len(training_set.y), n_folds=10, shuffle=True)
+    score_c = [ np.mean(
+        cross_val_score(polysvm, training_set.z, training_set.y, cv=cv))
+        for polysvm in svcs ]
+    return np.argmax(score_c), score_c
 
 ans = {
         1 : 'axd',
         2 : 'a', 
         3 : 'a',
         4 : 'c',
-        5 : 'a&d',
+        5 : 'a&d', # both true
         6 : 'b',
-        7 : '',
-        8 : '',
-        9 : '',
-        10 : '',
+        7 : 'c', # disagrees with given answer. Perhaps due to difference in svm libraries used
+        8 : 'c',
+        9 : 'e', 
+        10 : 'c&d', # tied for lowest eout
         }
     
 
@@ -81,6 +98,7 @@ def simulations():
         return DataML((t_data[:,1:], np.array(t_data[:,0], dtype="int")))
     training_set = convert_raw(training_data)    # print(training_set)
     testing_set = convert_raw(testing_data)
+
     results_even = [ trial_all_except(training_set, testing_set, digit, 'poly', 0.1, 2)
             for digit in range(0,9,2) ]
     in_sample_error_list_even = [ result[1][0] for result in results_even ]
@@ -107,8 +125,6 @@ def simulations():
             for c in [0.0001, 0.001 ,0.01, 0.1, 1]] for degree in range(2,6) ]
     results_transpose = [ [results[i][j] for i in range(len(results)) ] 
             for j in range(len(results[0])) ]
-    # print(len(results), len(results[0]))
-    # print(len(results_transpose), len(results_transpose[0]))
     c_lowest_ein =  [ result[1][0] for result in results_transpose[0] ]
     support_vectors = [ sum(result[0]) for result in results_transpose[1] ]
     c_third_lowest_ein =  [ result[1][0] for result in results_transpose[0] ]
@@ -119,6 +135,18 @@ def simulations():
     + "\n\tin sample errors when c = 0.01\n\t" + str(c_third_lowest_ein)
     + "\n\tout of sample errors when c = 1\n\t" + str(c_highest_eou)
     )
+    results = [ best_c(training_set) for _ in range(50) ]
+    frequency = np.bincount([ result[0] for result in results ])
+    que[7] = ("frequency :", frequency)
+    best = np.argmax(frequency)
+    average_score_of_best = np.mean([ result[1][best] for result in results ])
+    que[8] = ("average_score_of_best :", average_score_of_best)
+    results = [ trial_a_vs_b(training_set, testing_set, 1, 5, 'rbf', c)
+            for c in [0.01, 1, 100, 10**4, 10**6 ] ]
+    in_sample_errors = [ result[1][0] for result in results ] 
+    que[9] = ("in sample errors :", in_sample_errors)
+    out_of_sample_errors = [ result[1][1] for result in results ] 
+    que[10] = ("out of sample errors :", out_of_sample_errors)
     return que
 
 if __name__ == "__main__":
