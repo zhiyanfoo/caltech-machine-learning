@@ -4,7 +4,7 @@ import sys
 above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, above_dir)
 
-from tools import *
+from tools import random_target_function, random_set, second_order, pla, linear_percepton, weight_error, output, experiment
 import numpy as np
 
 np.random.seed(0)
@@ -61,27 +61,14 @@ def test_four(in_sample, out_sample):
     training_set.y[noisy_indices] *= -1
     weight = linear_percepton(training_set.z, training_set.y)
     in_error_no_transform = weight_error(weight, training_set.z, training_set.y)
-    training_set.z = transform(training_set.z)
+    training_set.z = second_order(training_set.z)
     weight = linear_percepton(training_set.z, training_set.y)
     in_error_transform = weight_error(weight, training_set.z, training_set.y)
-    testing_set = random_set(out_sample, moved_circle, transform)
+    testing_set = random_set(out_sample, moved_circle, second_order)
     noisy_indices = np.random.choice(out_sample, size=0.1 * out_sample, replace=False)
     testing_set.y[noisy_indices] *= -1
     out_error_transform = weight_error(weight, testing_set.z, testing_set.y)
     return in_error_no_transform, weight, out_error_transform
-
-def transform(x):
-    """
-    transform             
-    1 x1 x2  --->   1 x1 x2 x1x2 x1**2 x2**2
-    """
-    ones = x[:, 0]
-    x1 = x[:, 1]
-    x2 = x[:, 2]
-    x1_sqr = x1**2
-    x2_sqr = x2**2
-    x1x2 = x1 * x2
-    return np.stack([ones, x1, x2, x1x2, x1_sqr, x2_sqr], axis=1)
 
 def main():
     print("The following simulations are computationally intensive")

@@ -4,7 +4,7 @@ import sys
 above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, above_dir)
 
-from tools import *
+from tools import DataML, get_y, linear_percepton, output
 import numpy as np
 
 from math import ceil

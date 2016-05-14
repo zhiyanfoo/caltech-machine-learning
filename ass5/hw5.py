@@ -11,7 +11,7 @@ from mpmath import e
 
 import math
 
-from tools import *
+from tools import random_target_function, random_set, experiment, output
 import numpy as np
 
 from itertools import cycle
@@ -159,7 +159,6 @@ def tests():
 
 def test_in_error():
     error = in_error(0,1)
-    print(error)
     assert approximately_equal(error, 4)
 
 def test_in_error_derivative_u():

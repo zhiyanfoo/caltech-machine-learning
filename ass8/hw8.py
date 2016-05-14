@@ -5,21 +5,13 @@ file_dir = os.path.dirname(os.path.abspath(__file__))
 tools_dir_path = os.path.dirname(file_dir)
 sys.path.insert(0, tools_dir_path)
 
-from tools import *
+from tools import DataML, classified_error, allexcept, a_vs_b, output
 
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.cross_validation import cross_val_score, KFold
 
 import numpy as np 
-
-
-def allexcept(digit, *col_data_sets):
-    copies_of_data_sets = [ DataML((data_set.z, data_set.y)) for data_set in col_data_sets ]
-    for data_set in copies_of_data_sets:
-        truth_table = data_set.y != digit 
-        data_set.y[truth_table] = -1
-    return copies_of_data_sets
 
 def trial_all_except(training_set, testing_set, digit, kernel, c, degree=None):
     training_set, testing_set = allexcept(digit, training_set, testing_set)
@@ -35,18 +27,6 @@ def trial_all_except(training_set, testing_set, digit, kernel, c, degree=None):
     confusion = confusion_matrix(training_set.y, training_predicted)
     report = classification_report(training_set.y, training_predicted)
     return svm.n_support_, (in_sample_error, out_of_sample_error), report, confusion
-
-def a_vs_b(a, b, *col_data_sets):
-    copies_of_data_sets = [ DataML((data_set.z, data_set.y)) for data_set in col_data_sets ]
-    for i in range(len(copies_of_data_sets)):
-        data_set = copies_of_data_sets[i]
-        truth_a = data_set.y == a
-        truth_b = data_set.y == b
-        z = np.vstack([data_set.z[truth_a], data_set.z[truth_b]])
-        y = np.concatenate([data_set.y[truth_a], data_set.y[truth_b]])
-        copies_of_data_sets[i] = DataML((z,y))
-    return copies_of_data_sets
-
 
 def trial_a_vs_b(training_set, testing_set, a, b, kernel, c, degree=None):
     training_set, testing_set = a_vs_b(a, b, training_set, testing_set)
@@ -96,7 +76,7 @@ def simulations():
     testing_data = np.genfromtxt(os.path.join(file_dir, "features.test"))
     def convert_raw(t_data):
         return DataML((t_data[:,1:], np.array(t_data[:,0], dtype="int")))
-    training_set = convert_raw(training_data)    # print(training_set)
+    training_set = convert_raw(training_data)
     testing_set = convert_raw(testing_data)
 
     results_even = [ trial_all_except(training_set, testing_set, digit, 'poly', 0.1, 2)

@@ -4,7 +4,7 @@ import sys
 tools_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, tools_dir_path)
 
-from tools import *
+from tools import DataML, random_target_function, random_set, transform, pla, linear_percepton, weight_error, svm, experiment, output
 
 hw6_dir_path = os.path.join(tools_dir_path,"ass6")
 sys.path.insert(0, hw6_dir_path)

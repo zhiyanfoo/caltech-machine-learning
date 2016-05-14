@@ -4,7 +4,7 @@ import sys
 above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, above_dir)
 
-from tools import *
+from tools import random_target_function, random_set, pla, weight_error, output, experiment
 import numpy as np
 
 np.random.seed(0)

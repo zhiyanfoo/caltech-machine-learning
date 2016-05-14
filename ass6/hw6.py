@@ -1,12 +1,11 @@
 import os
 import sys
 
-
 file_dir = os.path.dirname(os.path.abspath(__file__))
 above_dir = os.path.dirname(file_dir)
 sys.path.insert(0, above_dir)
 
-from tools import *
+from tools import DataML, second_order, linear_percepton, minimize_error_aug, weight_error, output
 
 import numpy as np
 
@@ -29,20 +28,6 @@ def trial(training_data, testing_data, a):
     in_error, out_error = [ weight_error(weights, tset.z, tset.y)
         for tset in [training_set, DataML(testing_data, transform)] ]
     return in_error, out_error
-
-def minimize_error_aug(z,y,a):
-    """
-    minimize
-    d_Ein = Z(Z*w - y) + a*w = 0
-    (Z*Z + a*I)^-1 * Z*y) = w
-    Returns: weights
-    """
-    zz = z.transpose().dot(z)
-    zz_plus_ai = zz + a * np.identity(len(zz))
-    inv_zz_plus_ai = np.linalg.inv(zz_plus_ai)
-    zy = z.transpose().dot(y)
-    inv_zz_plus_ai_zy = inv_zz_plus_ai.dot(zy)
-    return inv_zz_plus_ai_zy 
 
 def pow_10(k): 
     return 10**k

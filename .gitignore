@@ -12,3 +12,6 @@ pyvenv.cfg
 share/
 
 lectures/
+
+ass9/features.test
+ass9/features.train
