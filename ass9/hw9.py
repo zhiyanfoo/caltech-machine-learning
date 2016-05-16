@@ -39,8 +39,6 @@ def svm_que_helper():
         return x[1]**2 - 2 * x[0] - 1
     def z2(x):
         return x[0]**2 - 2 * x[1] + 1
-    # z = [ [z1(x), z2(x)] for x in coordinates ]
-    # print(z)
     return DataML((coordinates, result))
 
 def train_svc(training_set, svc):
@@ -58,21 +56,35 @@ def generate_data():
     return random_set(100, f), random_set(100, f)
 
 def svc_rbf_trial(training_set, testing_set):
-    svc_rbf = SVC(kernel='rbf', C=10**6)
+    svc_rbf = SVC(kernel='rbf', C=10**4)
     svc_rbf.fit(training_set.z, training_set.y)
     svc_ein, svc_eout = [
             classified_error(svc_rbf.predict(t_set.z), t_set.y)
             for t_set in [training_set, testing_set] ]
-    print(svc_ein)
     if svc_ein > 10**-6:
         return None
     return svc_eout
 
+def reg_rbg_trial(training_set, testing_set, k, gammas):
+    gammas, weight, centers = reg_rbg_learn(
+            training_set.z, training_set.y, k, gammas)
+    in_sample_error, out_of_sample_error = [ 
+            classified_error(
+                rbf_predict(t_set.z, gammas, weight, centers), 
+                t_set.y)
+            for t_set in [training_set, testing_set] ]
+    return in_sample_error, out_of_sample_error
+
+def rbf_predict(z, gammas, weight, centers):
+    vec_sign = np.vectorize(sign)
+    phi = get_phi(z, gammas, centers)
+    return vec_sign(phi.dot(weight))
+
 def get_cluster_centers(z, k):
-    return KMeans(n_clusters=k).fit(z).cluster_centers_
+    kmeans = KMeans(n_clusters=k).fit(z) 
+    return kmeans.cluster_centers_
 
 def gaussian(gamma, x, center):
-    # print(weight, center)
     return np.exp(-1 * gamma * np.linalg.norm(x - center))
 
 def gen_fixed_gaussian(gamma, center):
@@ -88,36 +100,31 @@ def get_phi(z, gammas, centers):
         np.apply_along_axis(fixed_guassian, 1, z)
         for fixed_guassian in fixed_guassians]).transpose()
 
-def reg_rbg_learn(z, y, k):
-    cluster_centers = get_cluster_centers(z, k)
-    initial_gammas = np.ones(k)
-    initial_phi = get_phi(z, initial_gammas, cluster_centers) # gammas initally set to one
-    initial_weight = lmsq(initial_phi, y)
-    gamma_weight = expectation_maximization(
-            z, y, 
-            cluster_centers, 
-            initial_gammas,
-            initial_weight)
-    return gamma_weight
+def reg_rbg_learn(z, y, k, gammas):
+    centers = get_cluster_centers(z, k)
+    phi = get_phi(z, gammas, centers)
+    weight = lmsq(phi, y)
+    return gammas, weight, centers
 
 def expectation_maximization(
         z, y, 
         centers, 
         initial_gammas, 
         initial_weight):
+    """
+    optimize for gammas-using stochastic_gradient_descent-in addition
+    to weights, not used in the problem set"""
+    # from tools import stochastic_gradient descent 
     old_error = total_rbf_lmsq_error(z, y, initial_gammas, initial_weight, centers)
     new_gammas, iterations = stochastic_gradient_descent(z, y, 
             rbf_lmsq_error_d_wrt_ith_g,
             initial_gammas,
             {'w' : initial_weight, 'u' : centers})
     new_weight = get_weight(z, y, new_gammas, centers)
-    print(new_gammas, iterations)
     new_error = total_rbf_lmsq_error(z, y, new_gammas, new_weight, centers)
-    assert old_error >= new_error
     iterations = 1
-    while old_error - new_error > 0.01:
+    while abs(old_error - new_error) > 0.01:
         iterations += 1
-        print(iterations)
         old_error = new_error
         new_gammas = stochastic_gradient_descent(z, y, 
                 rbf_lmsq_error_d_wrt_ith_g,
@@ -126,34 +133,6 @@ def expectation_maximization(
         new_weight = get_weight(z, y, new_gammas, centers)
         new_error = total_rbf_lmsq_error(z, y, new_gammas, new_weight, centers)
     return new_gammas, new_weight
-        
-
-
-
-def stochastic_gradient_descent(z, y, derivative, initial_alphas, kwargs=dict()):
-    """optimizing for alphas"""
-    def gen_ith_derivatives(derivative, i, kwargs):
-        def ith_derivative(x, y, alphas):
-            return derivative(x, y, alphas, i=i, **kwargs)
-        return ith_derivative
-    gradient = [ gen_ith_derivatives(derivative, i, kwargs) 
-            for i in range(len(initial_alphas)) ]
-    old_run_alphas = epoch(z, y, initial_alphas, gradient)
-    new_run_alphas = epoch(z, y, old_run_alphas, gradient)
-    i = 0
-    while np.linalg.norm(old_run_alphas - new_run_alphas) > 0.01:
-        i += 1 
-        old_run_alphas = new_run_alphas
-        new_run_alphas = epoch(z, y, new_run_alphas, gradient)
-    return new_run_alphas, i
-
-def epoch(z, y, alphas, gradient):
-    LEARNING_RATE = 0.01
-    data_index_iter = np.random.permutation(len(z))
-    for i in data_index_iter:
-        alphas = alphas - LEARNING_RATE * np.array(
-                [ derivative(z[i], y[i], alphas) for derivative in gradient ])
-    return alphas
 
 def get_weight(z, y, gammas, centers):
     return lmsq(get_phi(z, gammas, centers), y)
@@ -166,6 +145,12 @@ def rbf_h(x, g, w, u):
                 for i in range(len(g)) ])
 
 def total_rbf_lmsq_error(z, y, gammas, weight, centers):
+    """
+    total radial bassis function least mean square error
+    g : gammas
+    w : weights
+    u : centers
+    """
     phi = get_phi(z, gammas, centers)
     return np.linalg.norm(phi.dot(weight) - y)
 
@@ -185,31 +170,24 @@ def rbf_lmsq_error_d_wrt_ith_g(x, y, g, w, u, i):
     """
     return -2 * w[i] * np.linalg.norm(x - u[i]) * gaussian(g[i], x, u[i]) * (rbf_h(x, g, w, u) - y)
 
-def reg_rbg_trial(training_set, testing_set, k=9):
-    gamma_weight = reg_rbg_learn(training_set.z, training_set.y, k)
 
-def trial():
-    # import matplotlib.pyplot as plt
-    # space = np.linspace(-1,1,25)
-    # print(space)
-    # x = np.array([ [ 1, a, b] for a in space for b in space ])
-    # print(x)
-    # real_y = get_y(f, x)
-    # real_y_pos_i = real_y == 1
-    # x_pos = x[real_y_pos_i]
-    # # plt.plot(x_pos[:,1], x_pos[:,2], 'bo')
-    # x_neg = x[real_y == -1]
-    # # plt.plot(x_neg[:,1], x_neg[:,2], 'ro')
-    training_set, testing_set = generate_data()
-    # train_y_pos_i = training_set.y == 1
-    # train_x_pos = training_set.z[train_y_pos_i]
-    # plt.plot(train_x_pos[:,1], train_x_pos[:,2], 'go')
-    # train_x_neg = training_set.z[training_set.y == -1]
-    # plt.plot(train_x_neg[:,1], train_x_neg[:,2], 'o', c='orange')
-    results = reg_rbg_trial(training_set, testing_set)
-    # plt.plot(cluster_centers[:,1], cluster_centers[:,2], 'b^')
-    # plt.show()
-    # print(svc_rbf_trial(training_set, testing_set))
+def trial(total_trials, k, gammas):
+    svc_eout_li = list()
+    reg_ein_li = list()
+    reg_eout_li = list()
+    total_hard_margin_svc_failure = 0
+    while len(svc_eout_li) < total_trials:
+        training_set, testing_set = generate_data()
+        svc_eout = svc_rbf_trial(training_set, testing_set)
+        if svc_eout == None:
+            total_hard_margin_svc_failure += 1
+            continue
+        svc_eout_li.append(svc_eout)
+        reg_ein, reg_eout = reg_rbg_trial(training_set, testing_set, k, gammas)
+        reg_ein_li.append(reg_ein)
+        reg_eout_li.append(reg_eout)
+    return total_hard_margin_svc_failure, np.array(svc_eout_li), np.array(reg_ein_li), np.array(reg_eout_li)
+
 
 def main():
     note = \
@@ -223,8 +201,7 @@ def main():
     result instead of classification
     """
     print(note)
-    # output(simulations)
-    trial()
+    output(simulations)
 
 def simulations():
     que = {}
@@ -311,6 +288,50 @@ def simulations():
             transform_help(add_constant, svm_que_helper())[0],
             SVC(kernel="poly", degree=2, C=float("infinity")))
     que[12] = ("total support vectors :", total_support_vectors)
+    total_trials = 30
+    class SVC_REGULAR:
+        def __init__(self, total_trials, k, gammas):
+            self.total_hard_margin_svc_failure, \
+            self.svc_eout_li, \
+            self.reg_ein_li, \
+            self.reg_eout_li = trial(total_trials, k, gammas)
+
+    k9_g1x5 = SVC_REGULAR(total_trials, 9, 1.5 * np.ones(9))
+    que[13] = ("total hard margin svc failure percentage :", k9_g1x5.total_hard_margin_svc_failure / total_trials)
+    que[14] = ("svc rbf better than regular rbf percentage (k=9):", 
+            sum(k9_g1x5.svc_eout_li < k9_g1x5.reg_eout_li) / len(k9_g1x5.svc_eout_li) )
+    k12_g1x5 = SVC_REGULAR(total_trials, 12, 1.5 * np.ones(12))
+    que[15] = ("svc rbf better than regular rbf percentage (k=12):", 
+            sum(k12_g1x5.svc_eout_li < k12_g1x5.reg_eout_li) / len(k12_g1x5.svc_eout_li) )
+    k9_better_k12_ein_percentage = sum(k9_g1x5.reg_ein_li < k12_g1x5.reg_ein_li) / len(k9_g1x5.reg_ein_li)
+    k9_better_k12_eout_percentage = sum(k9_g1x5.reg_eout_li < k12_g1x5.reg_eout_li) / len(k9_g1x5.reg_eout_li)
+    pretty_table = tabulate(
+            [[k9_better_k12_ein_percentage, k9_better_k12_eout_percentage]],
+            headers=["k=9 ein < k=12 ein percentage", "k=9 eout < k=12 eout percentage"])
+    table = [ [ np.mean(error_li) 
+        for error_li in [svc_regular.reg_ein_li, svc_regular.reg_eout_li] ]
+        for svc_regular in [k9_g1x5, k12_g1x5] ]
+    pretty_table2 = tabulate([["k=9"] + table[0], ["k=12"] + table[1]],
+            headers=["", "in sample error", "out of sampler error"])
+    que[16] = ("regular rbf changing k",
+            "\n" + str(pretty_table) \
+            + "\n" + str(pretty_table2))
+    k9_g2 = SVC_REGULAR(total_trials, 12, 2 * np.ones(12))
+    g1x5_better_g2_ein_percentage = sum(k9_g1x5.reg_ein_li < k9_g2.reg_ein_li) / len(k9_g1x5.reg_ein_li)
+    g1x5_better_g2_eout_percentage = sum(k9_g1x5.reg_eout_li < k9_g2.reg_eout_li) / len(k9_g1x5.reg_eout_li)
+    pretty_table = tabulate(
+            [[g1x5_better_g2_ein_percentage, g1x5_better_g2_eout_percentage]], headers=["g=1.5 ein < g=2 ein percentage", "g=1.5 eout < g=2 eout percentage"])
+    table = [ [ np.mean(error_li) 
+        for error_li in [svc_regular.reg_ein_li, svc_regular.reg_eout_li] ]
+        for svc_regular in [k9_g1x5, k9_g2] ]
+    pretty_table2 = tabulate([["g=1.5"] + table[0], ["g=2"] + table[1]],
+            headers=["", "in sample error", "out of sampler error"])
+    que[17] = ("regular rbf changing gammas", 
+            "\n" + str(pretty_table) \
+            + "\n" + str(pretty_table2))
+    zero_ein = k9_g1x5.reg_ein_li < 1 / (10 * total_trials )
+    que[18] = ("regular rbf (k=9, gamma=1.5) zero in sample error percentage : ", 
+            sum(zero_ein) / len(zero_ein))
     return que
 
 ans = {
@@ -326,13 +347,13 @@ ans = {
         10 : 'a',
         11 : 'c',
         12 : 'c',
-        13 : '',
-        14 : '',
-        15 : '',
-        16 : '',
-        17 : '',
-        18 : '',
-        19 : '',
+        13 : 'a',
+        14 : 'e',
+        15 : 'd',
+        16 : 'b',
+        17 : 'b',
+        18 : 'a',
+        19 : 'b',
         20 : '',
         }
 

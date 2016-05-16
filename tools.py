@@ -131,6 +131,38 @@ def second_order_nic(x):
     x1x2 = x1 * x2
     return np.stack([ones, x1, x2, x1x2, x1_sqr, x2_sqr], axis=1)
 
+# STOCHASTIC GRADIENT DESCENT
+
+def stochastic_gradient_descent(z, y, derivative, initial_alphas, kwargs=dict()):
+    """
+    optimizing for alphas
+    must provide a function 'derivative' that takes as an arguement 'i'
+    and returns the derivative in that direction
+    """
+    def gen_ith_derivatives(derivative, i, kwargs):
+        def ith_derivative(x, y, alphas):
+            return derivative(x, y, alphas, i=i, **kwargs)
+        return ith_derivative
+    gradient = [ gen_ith_derivatives(derivative, i, kwargs) 
+            for i in range(len(initial_alphas)) ]
+    old_run_alphas = epoch(z, y, initial_alphas, gradient)
+    new_run_alphas = epoch(z, y, old_run_alphas, gradient)
+    i = 0
+    while np.linalg.norm(old_run_alphas - new_run_alphas) > 0.01:
+        i += 1 
+        old_run_alphas = new_run_alphas
+        new_run_alphas = epoch(z, y, new_run_alphas, gradient)
+    return new_run_alphas, i
+
+def epoch(z, y, alphas, gradient):
+    LEARNING_RATE = 0.01
+    data_index_iter = np.random.permutation(len(z))
+    for i in data_index_iter:
+        alphas = alphas - LEARNING_RATE * np.array(
+                [ derivative(z[i], y[i], alphas) for derivative in gradient ])
+    return alphas
+
+
 # PERCEPTON LEARNING ALGORITHIM
 
 def pla(x, y, weight=None, return_iterations=False):
