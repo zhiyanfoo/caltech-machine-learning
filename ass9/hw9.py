@@ -336,25 +336,25 @@ def simulations():
 
 ans = {
         1 : 'e', # The dimensionality of the Z space should be 65
-        2 : 'e', 
-        3 : 'a',
+        2 : 'exd', 
+        3 : 'axd',
         4 : 'd',
         5 : 'a',
         6 : 'b',
-        7 : 'a',
+        7 : 'axd',
         8 : 'b',
-        9 : '', #all the statements are wrong although d comes close 
+        9 : 'e', #all the statements are wrong although d comes close 
         10 : 'a',
         11 : 'c',
         12 : 'c',
         13 : 'a',
         14 : 'e',
         15 : 'd',
-        16 : 'b',
-        17 : 'b',
+        16 : 'd',
+        17 : 'dxc',
         18 : 'a',
         19 : 'b',
-        20 : '',
+        20 : 'dxc',
         }
 
 if __name__ == "__main__":
