@@ -6,7 +6,6 @@ import urllib.request
 file_dir = os.path.dirname(os.path.abspath(__file__))
 
 def main():
-    # download_file("https://work.caltech.edu/homework/hw1.pdf", file_dir, "hw1.pdf")
     download_hw_and_sol()
     download_data()
     print("downloads completed")
