@@ -5,7 +5,7 @@ file_dir = os.path.dirname(os.path.abspath(__file__))
 above_dir = os.path.dirname(file_dir)
 sys.path.insert(0, above_dir)
 
-from tools import DataML, second_order, linear_percepton, minimize_error_aug, weight_error, output
+from tools import ProgressIterator, DataML, transform, linear_percepton, minimize_error_aug, weight_error, output
 
 import numpy as np
 
@@ -41,18 +41,27 @@ def simulations():
     que = {}
     training_data = np.genfromtxt(os.path.join(file_dir, "in.dta"))
     testing_data = np.genfromtxt(os.path.join(file_dir, "out.dta"))
+    progress_iterator = ProgressIterator(4)
+
+    progress_iterator.next()
     in_sample_error, out_of_sample_error = test1(training_data, testing_data)
     que[2] = ("linear regression",
             "\n\tin sample error : " + str(in_sample_error) + \
             "\n\tout of sample error : " + str(out_of_sample_error))
+
+    progress_iterator.next()
     in_sample_error, out_sample_error = trial(training_data, testing_data, pow_10(-3))
     que[3] = ("linear regression with weight decay, k=-3",
             "\n\tin sample error : " + str(in_sample_error) + \
             "\n\tout of sample error : " + str(out_of_sample_error))
+
+    progress_iterator.next()
     in_sample_error, out_sample_error = trial(training_data, testing_data, pow_10(3))
     que[4] = ("linear regression with weight decay, k=3",
             "\n\tin sample error : " + str(in_sample_error) + \
             "\n\tout of sample error : " + str(out_of_sample_error))
+
+    progress_iterator.next()
     out_of_sample_errors = [ str(trial(training_data, testing_data, pow_10(k))[1])
             for k in range(-2,3) ]
     que[5] = ("linear regression with weight decay, k=-2..2",

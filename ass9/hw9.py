@@ -5,7 +5,7 @@ file_dir = os.path.dirname(os.path.abspath(__file__))
 tools_dir_path = os.path.dirname(file_dir)
 sys.path.insert(0, tools_dir_path)
 
-from tools import DataML, random_set, get_y, add_constant, second_order_nic, minimize_error_aug, svm, allexcept, a_vs_b, weight_error, classified_error, sign, output
+from tools import ProgressIterator, DataML, random_set, get_y, add_constant, second_order_nic, minimize_error_aug, svm, allexcept, a_vs_b, weight_error, classified_error, sign, output
 import numpy as np
 
 from tabulate import tabulate
@@ -214,6 +214,9 @@ def simulations():
     def transform_help(transform, *col_data_sets):
         return [ DataML((transform(data_set.z), data_set.y)) 
                 for data_set in col_data_sets ]
+    progress_iterator = ProgressIterator(4)
+
+    progress_iterator.next()
     constant_training_set, constant_testing_set = transform_help(
             add_constant, initial_training_set, initial_testing_set)
     allexcept_constant_train_test_li = [
@@ -231,6 +234,7 @@ def simulations():
     que[7] = ("digit with lowest in sample error : ", 
             str(min_arg) + ", " + str(min_error))
 
+    progress_iterator.next()
     second_order_training_set, second_order_testing_set = transform_help(
             second_order_nic, initial_training_set, initial_testing_set)
     allexcept_second_order_train_test_li = [
@@ -269,6 +273,8 @@ def simulations():
     que[9] = ("effectiveness of feature transform on 0 and 9",
             tables_string
             )
+
+    progress_iterator.next()
     one_v_five_second_order_sets = a_vs_b(
             1, 5,
            second_order_training_set, 
@@ -296,6 +302,7 @@ def simulations():
             self.reg_ein_li, \
             self.reg_eout_li = trial(total_trials, k, gammas)
 
+    progress_iterator.next()
     k9_g1x5 = SVC_REGULAR(total_trials, 9, 1.5 * np.ones(9))
     que[13] = ("total hard margin svc failure percentage :", k9_g1x5.total_hard_margin_svc_failure / total_trials)
     que[14] = ("svc rbf better than regular rbf percentage (k=9):", 

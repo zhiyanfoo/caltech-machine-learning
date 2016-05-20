@@ -4,7 +4,7 @@ import sys
 tools_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, tools_dir_path)
 
-from tools import DataML, random_target_function, random_set, transform, pla, linear_percepton, weight_error, svm, experiment, output
+from tools import ProgressIterator, DataML, random_target_function, random_set, transform, pla, linear_percepton, weight_error, svm, experiment, output
 
 hw6_dir_path = os.path.join(tools_dir_path,"ass6")
 sys.path.insert(0, hw6_dir_path)
@@ -71,6 +71,9 @@ def simulations():
     que = {}
     training_data = np.genfromtxt(os.path.join(hw6_dir_path, "in.dta"))
     testing_data = np.genfromtxt(os.path.join(hw6_dir_path, "out.dta"))
+    progress_iterator = ProgressIterator(6)
+
+    progress_iterator.next()
     inital_total = 25 # initial points used for training
     inital_model_weights = restricted_training(training_data, inital_total)
     validation_set = DataML(training_data[inital_total:], transform) 
@@ -79,12 +82,16 @@ def simulations():
             "\nerrors : " + str(out_of_sample_errors) \
             + "\nbest k : " + str(best_k)
             )
+
+    progress_iterator.next()
     testing_set = DataML(testing_data, transform)
     best_k, out_of_sample_errors = best_model(inital_model_weights, testing_set)
     que[2] = ("test set out of sample errors",
             "\nerrors : " + str(out_of_sample_errors) \
             + "\nbest k : " + str(best_k)
             )
+
+    progress_iterator.next()
     first_error = min(out_of_sample_errors)
     reverse_total = 10 
     training_set = DataML(training_data[-reverse_total:], transform)
@@ -94,6 +101,8 @@ def simulations():
             "\nerrors : " + str(out_of_sample_errors) \
             + "\nbest k : " + str(best_k)
             )
+
+    progress_iterator.next()
     testing_set = DataML(testing_data, transform)
     best_k, out_of_sample_errors = best_model(reverse_model_weights, testing_set)
     que[4] = ("test set out of sample errors",
@@ -102,8 +111,12 @@ def simulations():
             )
     second_error = min(out_of_sample_errors)
     que[5] = ("smallest out of sample errors :", str(first_error) + ", " + str(second_error))
+
+    progress_iterator.next()
     svm_better, total_support_vectors  = experiment(trial, [10, 100], 1000)
     que[8] = ("svm better than pla : ", svm_better)
+
+    progress_iterator.next()
     svm_better, total_support_vectors  = experiment(trial, [100, 100], 1000)
     que[9] = ("svm better than pla : ", svm_better)
     que[10] = ("total support vectors : ", total_support_vectors)

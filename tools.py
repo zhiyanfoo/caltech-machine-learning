@@ -317,3 +317,12 @@ def output(simulations):
         print("".join([ "-" for i in range(len("question ") + len(str(key))) ]))
         print(sim[key][0], sim[key][1])
 
+class ProgressIterator:
+    def __init__(self, total_simulations):
+        self.total_simulations = total_simulations
+        self.current_simulation = 1
+
+    def next(self):
+        print("simulation {0}/{1}".format(
+            self.current_simulation, self.total_simulations))
+        self.current_simulation += 1

@@ -11,7 +11,7 @@ from mpmath import e
 
 import math
 
-from tools import random_target_function, random_set, experiment, output
+from tools import ProgressIterator, random_target_function, random_set, experiment, output
 import numpy as np
 
 from itertools import cycle
@@ -121,12 +121,16 @@ def error(error_function, testing_set, weights):
 
 def main():
     tests()
-    print("the following simulations are computationally intensive")
+    print("the following simulations are computationally intensive,\n this one took 2min 30s on my computer")
     output(simulations)
 
 def simulations():
     que = {}
+    progress_iterator = ProgressIterator(4)
+    progress_iterator.next()
     que[1] = ("sample points needed :", datapoints_needed(0.008, 0.1, 8))
+
+    progress_iterator.next()
     gradient = [in_error_derivative_u, in_error_derivative_v]
     value, point, iterations =  find_threshold(in_error, in_error_gradient, [1,1], 0.1, mpf(10)**mpf(-14), 0 )
     que[5] = ( "gradient descent results", "\n\tvalue : " + str(value) \
@@ -135,6 +139,8 @@ def simulations():
                                            + "\n\titerations : " + str(iterations)\
                                            + " # ans to question 5"
                                            )
+
+    progress_iterator.next()
     gradient = [in_error_derivative_u, in_error_derivative_v]
     value, point, iterations = coordinate_descent_max_iterations(
             in_error, gradient, [1,1], mpf('0.1'), 30)
@@ -146,6 +152,7 @@ def simulations():
         weight, iterations, out_sample_error = trial(*args)
         return iterations, out_sample_error
 
+    progress_iterator.next()
     iterations, out_sample_error = experiment(trial_no_weights, [100, 1000], 100)
     que[8] = ("out of sample cross entrophy error :", out_sample_error)
     que[9] = ("iterations :", iterations)

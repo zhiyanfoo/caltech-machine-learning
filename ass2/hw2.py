@@ -4,7 +4,7 @@ import sys
 above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, above_dir)
 
-from tools import random_target_function, random_set, second_order, pla, linear_percepton, weight_error, output, experiment
+from tools import ProgressIterator, random_target_function, random_set, second_order, pla, linear_percepton, weight_error, output, experiment
 import numpy as np
 
 np.random.seed(0)
@@ -57,7 +57,7 @@ def moved_circle(data_point):
 
 def test_four(in_sample, out_sample):
     training_set = random_set(in_sample, moved_circle)
-    noisy_indices = np.random.choice(in_sample, size=0.1 * in_sample, replace=False)
+    noisy_indices = np.random.choice(in_sample, size=round(0.1 * in_sample), replace=False)
     training_set.y[noisy_indices] *= -1
     weight = linear_percepton(training_set.z, training_set.y)
     in_error_no_transform = weight_error(weight, training_set.z, training_set.y)
@@ -65,7 +65,7 @@ def test_four(in_sample, out_sample):
     weight = linear_percepton(training_set.z, training_set.y)
     in_error_transform = weight_error(weight, training_set.z, training_set.y)
     testing_set = random_set(out_sample, moved_circle, second_order)
-    noisy_indices = np.random.choice(out_sample, size=0.1 * out_sample, replace=False)
+    noisy_indices = np.random.choice(out_sample, size=round(0.1 * out_sample), replace=False)
     testing_set.y[noisy_indices] *= -1
     out_error_transform = weight_error(weight, testing_set.z, testing_set.y)
     return in_error_no_transform, weight, out_error_transform
@@ -76,13 +76,21 @@ def main():
 
 def simulations():
     que ={}
+    progress_iterator = ProgressIterator(4)
+    progress_iterator.next()
     avg_v1, avg_vrand, avg_vmin = test_one()
     que[1] = ("v min :", avg_vmin)
+    
+    progress_iterator.next()
     in_error, out_error = experiment(test_two, [100, 1000], 1000)
     que[5] = ("in sample error :", in_error)
     que[6] = ("out sample error :", out_error)
+
+    progress_iterator.next()
     iterations = experiment(test_three, [10], 1000)
     que[7] = ("iterations :", iterations)
+
+    progress_iterator.next()
     results = np.array([ test_four(100, 1000) for _ in range(1000) ], dtype=object)
     in_error_no_transform = np.mean(results[:,0])
     weight = np.mean(results[:,1], axis=0)

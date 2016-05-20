@@ -10,8 +10,15 @@ lib/
 pip-selfcheck.json
 pyvenv.cfg
 share/
+minimal_enviroment/
+
+get_import_statements.py
 
 lectures/
 
+ass6/in.dta
+ass6/out.dta
+ass8/features.test
+ass8/features.train
 ass9/features.test
 ass9/features.train

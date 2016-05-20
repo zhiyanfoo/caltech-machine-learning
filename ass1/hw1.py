@@ -4,7 +4,7 @@ import sys
 above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, above_dir)
 
-from tools import random_target_function, random_set, pla, weight_error, output, experiment
+from tools import ProgressIterator, random_target_function, random_set, pla, weight_error, output, experiment
 import numpy as np
 
 np.random.seed(0)
@@ -25,9 +25,13 @@ def main():
 
 def simulations():
     que ={}
+    progress_iterator = ProgressIterator(2)
+    progress_iterator.next()
     out_error, iterations = experiment(trial, [10, 100], 1000)
     que[7] = ("iterations :", iterations)
     que[8] = ("out of sample error :", out_error)
+
+    progress_iterator.next()
     out_error, iterations = experiment(trial, [100, 100], 1000)
     que[9] = ("iterations :", iterations)
     que[10] = ("out of sample error :", out_error)

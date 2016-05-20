@@ -4,7 +4,7 @@ import sys
 above_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, above_dir)
 
-from tools import DataML, get_y, linear_percepton, output
+from tools import ProgressIterator, DataML, get_y, linear_percepton, output
 import numpy as np
 
 from math import ceil
@@ -250,6 +250,8 @@ def main():
 
 def simulations():
     que ={}
+    progress_iterator = ProgressIterator(5)
+    progress_iterator.next()
     sample_size = ceil(solved_vc_inequality(1 - 0.95, 0.05, 400000))
     que[1] = ("sample size needed :", sample_size)
     def error_bound_format(n):
@@ -262,8 +264,14 @@ def simulations():
             + "\n"
             )
         return output
+
+    progress_iterator.next()
     que[2] = error_bound_format(10000)
+
+    progress_iterator.next()
     que[3] = error_bound_format(5) 
+
+    progress_iterator.next()
     analysis = bias_variance_out_sample_error(1000)
     def bias_variance_format(analysis):
         names = [ "constant : a",
@@ -287,6 +295,8 @@ def simulations():
                         + "\nexpected out of sample error : " + str(analysis[i]["expected out of sample error"])
         output += "\n\nbest hypothesis is 'line throgh origin' with an expected out of sample error of " + str(round(analysis[1]["expected out of sample error"], 3))
         return output
+
+    progress_iterator.next()
     que[7] = ("analysis of various hypotheses", bias_variance_format(analysis))
     return que
 
