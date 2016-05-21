@@ -1,9 +1,9 @@
-## Caltech's Machine Learning Course
+# Caltech's Machine Learning Course
 
-#### What is this?
-A collection of answers to [Caltech's Machine Learning Course](https://work.caltech.edu/telecourse.html) by Professor Yaser Abu-Mostafa and more importantly the code used to arrive at the said answers. Also included is a script to download the material needed for completing the course. This material was not included in the repository due to the course's restriction on the redistribution of its material.
+### What is this?
+A collection of answers to [Caltech's Machine Learning Course](https://work.caltech.edu/telecourse.html) by Professor Yaser Abu-Mostafa and, more importantly, the code used to arrive at the said answers. Also included is a script to download the material needed for completing the course. The course material was not included in this repository due to the course's restriction on the redistribution of its material.
 
-#### Requirements
+### Requirements
 
 >     python3
 
@@ -15,7 +15,7 @@ to install said libraries run
 pip3 install -r requirements.txt
 ```
 
-#### What to do
+### What to do
 
 Once you have installed python3 and the additional libraries you should first get the course materials.
 
@@ -23,12 +23,12 @@ Once you have installed python3 and the additional libraries you should first ge
 python3 get_course_materials.py
 ```
 
-To run the experiments, for example for ass1 do
+To run the experiments, for example for ass1, do
 ```bash
 python3 hw1.py
 ```
 
-#### Answers
+### Answers
 
 My answer to every question is found at the bottom of the hw*.py, in a python dictionary. Below is a random example so as not to spoil anything for anyone.
 
