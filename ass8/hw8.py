@@ -48,20 +48,6 @@ def best_c(training_set):
         for polysvm in svcs ]
     return np.argmax(score_c), score_c
 
-ans = {
-        1 : 'axd',
-        2 : 'a', 
-        3 : 'a',
-        4 : 'c',
-        5 : 'a&d', # both true
-        6 : 'b',
-        7 : 'c', # disagrees with given answer. Perhaps due to difference in svm libraries used
-        8 : 'c',
-        9 : 'e', 
-        10 : 'c&d', # tied for lowest eout
-        }
-    
-
 def main():
     output(simulations)
 
@@ -134,5 +120,18 @@ def simulations():
     que[10] = ("out of sample errors :", out_of_sample_errors)
     return que
 
+ans = {
+        1 : 'axd',
+        2 : 'a', 
+        3 : 'a',
+        4 : 'c',
+        5 : 'a&d', # both true
+        6 : 'b',
+        7 : 'c?b',
+        8 : 'c',
+        9 : 'e', 
+        10 : 'c&d', # tied for lowest eout
+        }
+    
 if __name__ == "__main__":
     main()

@@ -26,6 +26,7 @@ def main():
 def simulations():
     que ={}
     progress_iterator = ProgressIterator(2)
+
     progress_iterator.next()
     out_error, iterations = experiment(trial, [10, 100], 1000)
     que[7] = ("iterations :", iterations)

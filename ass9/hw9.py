@@ -350,7 +350,7 @@ ans = {
         6 : 'b',
         7 : 'axd',
         8 : 'b',
-        9 : 'e', #all the statements are wrong although d comes close 
+        9 : '?c', # given answer is e but all the statements are wrong although d comes close to being right
         10 : 'a',
         11 : 'c',
         12 : 'c',
@@ -358,7 +358,7 @@ ans = {
         14 : 'e',
         15 : 'd',
         16 : 'd',
-        17 : 'dxc',
+        17 : 'd?c',
         18 : 'a',
         19 : 'b',
         20 : 'dxc',

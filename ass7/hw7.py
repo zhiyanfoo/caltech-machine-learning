@@ -11,6 +11,8 @@ sys.path.insert(0, hw6_dir_path)
 
 import numpy as np 
 
+from tabulate import tabulate
+
 np.random.seed(0)
 
 # VALIDATION
@@ -51,19 +53,6 @@ def trial(in_sample, out_of_sample):
     total_support_vectors = sum([ 1 for x in svm_weight if x >= 10*-3 ])
     return svm_better, total_support_vectors
 
-ans = {
-        1 : 'd',
-        2 : 'e',
-        3 : 'd',
-        4 : 'd',
-        5 : 'b',
-        6 : 'cxd',
-        7 : 'c',
-        8 : 'c',
-        9 : 'd',
-        10 : 'b',
-        }
-
 def main():
     output(simulations)
 
@@ -78,17 +67,23 @@ def simulations():
     inital_model_weights = restricted_training(training_data, inital_total)
     validation_set = DataML(training_data[inital_total:], transform) 
     best_k, out_of_sample_errors = best_model(inital_model_weights, validation_set)
+    pretty_table = tabulate( [ [ k, out_of_sample_errors[k-3]] 
+        for k in range(3, 8) ],
+        headers=["k", "EOUT"])
     que[1] = ("validation set out of sample errors, last 10 points",
-            "\nerrors : " + str(out_of_sample_errors) \
-            + "\nbest k : " + str(best_k)
+            "\n" \
+            + str(pretty_table)
             )
 
     progress_iterator.next()
     testing_set = DataML(testing_data, transform)
     best_k, out_of_sample_errors = best_model(inital_model_weights, testing_set)
+    pretty_table = tabulate( [ [ k, out_of_sample_errors[k-3]] 
+        for k in range(3, 8) ],
+        headers=["k", "EOUT"])
     que[2] = ("test set out of sample errors",
-            "\nerrors : " + str(out_of_sample_errors) \
-            + "\nbest k : " + str(best_k)
+            "\n" \
+            + str(pretty_table)
             )
 
     progress_iterator.next()
@@ -97,17 +92,23 @@ def simulations():
     training_set = DataML(training_data[-reverse_total:], transform)
     reverse_model_weights = gen_models(training_set)
     best_k, out_of_sample_errors = best_model(reverse_model_weights, DataML(training_data[:-reverse_total], transform))
+    pretty_table = tabulate( [ [ k, out_of_sample_errors[k-3]] 
+        for k in range(3, 8) ],
+        headers=["k", "EOUT"])
     que[3] = ("validation set out of sample errors, first 25 points",
-            "\nerrors : " + str(out_of_sample_errors) \
-            + "\nbest k : " + str(best_k)
+            "\n" \
+            + str(pretty_table)
             )
 
     progress_iterator.next()
     testing_set = DataML(testing_data, transform)
     best_k, out_of_sample_errors = best_model(reverse_model_weights, testing_set)
+    pretty_table = tabulate( [ [ k, out_of_sample_errors[k-3]] 
+        for k in range(3, 8) ],
+        headers=["k", "EOUT"])
     que[4] = ("test set out of sample errors",
-            "\nerrors : " + str(out_of_sample_errors) \
-            + "\nbest k : " + str(best_k)
+            "\n" \
+            + str(pretty_table)
             )
     second_error = min(out_of_sample_errors)
     que[5] = ("smallest out of sample errors :", str(first_error) + ", " + str(second_error))
@@ -122,6 +123,18 @@ def simulations():
     que[10] = ("total support vectors : ", total_support_vectors)
     return que
 
+ans = {
+        1 : 'd',
+        2 : 'e',
+        3 : 'd',
+        4 : 'd',
+        5 : 'b',
+        6 : 'cxd',
+        7 : 'c',
+        8 : 'c',
+        9 : 'd',
+        10 : 'b',
+        }
 
 if __name__ == "__main__":
     main()
