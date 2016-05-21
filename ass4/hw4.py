@@ -275,9 +275,9 @@ def simulations():
     analysis = bias_variance_out_sample_error(1000)
     def bias_variance_format(analysis):
         names = [ "constant : a",
-                "\n\nline throgh origin : ax",
+                "\n\nline through origin : ax",
                 "\n\nline : ax + b",
-                "\n\nquadratic throught origin : ax**2",
+                "\n\nquadratic through origin : ax**2",
                 "\n\nquadratic : ax**2 + b"]
         output = ""
         for i in range(len(analysis)):
@@ -297,18 +297,19 @@ def simulations():
         return output
 
     progress_iterator.next()
-    que[7] = ("analysis of various hypotheses", bias_variance_format(analysis))
+    que[4] = ("Also includes answers to question 5,6,7\n\nAnalysis of various hypotheses", 
+            "\n" + str(bias_variance_format(analysis)))
     return que
 
 
 ans = {
-        1 : 'e',
+        1 : 'd',
         2 : 'd',
         3 : 'c',
-        4 : 'e',
+        4 : 'e?d',
         5 : 'b',
         6 : 'a',
-        7 : 'c',
+        7 : 'b',
         8 : 'c',
         9 : 'b',
         10 : 'dxe',

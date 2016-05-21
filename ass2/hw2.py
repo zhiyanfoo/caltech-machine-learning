@@ -18,11 +18,11 @@ def collate_flip_results(coin_data):
     return np.sum(coin_data, axis=2)
 
 def experiment_results(collated_flips):
-    avg_v1 = np.average(collated_flips[:,0])
+    avg_v1 = np.average(collated_flips[:,0]) / 10
     random_samples = [ trial[np.random.randint(len(trial))] 
             for trial in collated_flips ]
-    avg_vrand = np.average(random_samples)
-    avg_vmin = np.average(np.amin(collated_flips, axis=1))
+    avg_vrand = np.average(random_samples) / 10
+    avg_vmin = np.average(np.amin(collated_flips, axis=1)) / 10
     return avg_v1, avg_vrand, avg_vmin
 
 def test_one():

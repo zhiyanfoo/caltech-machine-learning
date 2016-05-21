@@ -9,6 +9,8 @@ from tools import ProgressIterator, DataML, transform, linear_percepton, minimiz
 
 import numpy as np
 
+from tabulate import tabulate
+
 np.random.seed(0)
 
 # REGULARIZATION WITH WEIGHT DECAY
@@ -50,13 +52,13 @@ def simulations():
             "\n\tout of sample error : " + str(out_of_sample_error))
 
     progress_iterator.next()
-    in_sample_error, out_sample_error = trial(training_data, testing_data, pow_10(-3))
+    in_sample_error, out_of_sample_error = trial(training_data, testing_data, pow_10(-3))
     que[3] = ("linear regression with weight decay, k=-3",
             "\n\tin sample error : " + str(in_sample_error) + \
             "\n\tout of sample error : " + str(out_of_sample_error))
 
     progress_iterator.next()
-    in_sample_error, out_sample_error = trial(training_data, testing_data, pow_10(3))
+    in_sample_error, out_of_sample_error = trial(training_data, testing_data, pow_10(3))
     que[4] = ("linear regression with weight decay, k=3",
             "\n\tin sample error : " + str(in_sample_error) + \
             "\n\tout of sample error : " + str(out_of_sample_error))
@@ -64,8 +66,10 @@ def simulations():
     progress_iterator.next()
     out_of_sample_errors = [ str(trial(training_data, testing_data, pow_10(k))[1])
             for k in range(-2,3) ]
-    que[5] = ("linear regression with weight decay, k=-2..2",
-            "\nout of sample errors\n" + "\n".join(out_of_sample_errors))
+    pretty_table = tabulate( [ [k, out_of_sample_errors[k+2]] for k in range(-2,3) ], 
+        headers=['k', "EOUT"])
+    que[5] = ("Also includes answer to question 6\n\nlinear regression with weight decay, k=-2..2",
+            "\nout of sample errors\n" + pretty_table)
     return que
 
 ans = {
