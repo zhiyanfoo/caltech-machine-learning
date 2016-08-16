@@ -52,9 +52,9 @@ def download_data():
 
 def download_file(download_url, dir_path, file_name):
     response = urllib.request.urlopen(download_url)
-    file = open(os.path.join(dir_path, file_name), 'wb')
-    file.write(response.read())
-    file.close()
+    f = open(os.path.join(dir_path, file_name), 'wb')
+    f.write(response.read())
+    f.close()
     print(file_name, "from", download_url)
 
 if __name__ == "__main__":
