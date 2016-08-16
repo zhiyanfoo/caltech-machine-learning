@@ -1,7 +1,7 @@
 # Caltech's Machine Learning Course
 
 ## What is this?
-A collection of answers to [Caltech's Machine Learning Course](https://work.caltech.edu/telecourse.html) by Professor Yaser Abu-Mostafa and, more importantly, the code used to arrive at the said answers. Also included is a script to download the material needed for completing the course. The course material was not included in this repository due to the course's restriction on the redistribution of its material.
+A collection of answers to [Caltech's Machine Learning Course](https://work.caltech.edu/telecourse.html) by Professor Yaser Abu-Mostafa and, more importantly, the code used to arrive at the said answers. Also included is a script to download the material needed for completing the course. The course material was not included in this repository due to the course's restriction on the redistribution of its material. However you should take a look at the [problem sets](https://work.caltech.edu/homeworks.html) to understand why the code does what it does.
 
 ## Requirements
 
