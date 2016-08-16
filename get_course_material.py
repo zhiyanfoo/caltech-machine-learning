@@ -3,6 +3,9 @@ import os
 import sys
 
 import urllib.request
+
+# CLONE REPOSITORY OR HAVE THE EXACT SAME FILE STRUCTURE AS REPOSITORY
+
 file_dir = os.path.dirname(os.path.abspath(__file__))
 
 def main():
