@@ -3,9 +3,9 @@ def main():
 
 def output(ans):
     print("no simulations required for this weeks assignment")
-    print("displaying mutiple choice answers instead")
+    print("displaying multiple choice answers instead")
     for key in sorted(ans.keys()):
-        print("""question""", key, ":", ans[key])
+        print("question", key, ":", ans[key])
 
 ans = {
         1 : 'b',
